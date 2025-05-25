@@ -9,7 +9,7 @@ import { sendEmail } from "../../utils/sendEmail";
 import { createToken, verifyToken } from "./user.utils";
 
 
-const createUserIntoDB = async (payload: TUser) => {
+const createUserIntoDB = async (payload: TUser) => {  
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expirationTime = new Date(Date.now() + 2 * 60 * 1000);
 
@@ -41,7 +41,7 @@ const createUserIntoDB = async (payload: TUser) => {
     otp,
     expiresAt: expirationTime,
   };
-
+  
   await sendEmail(payload?.email, otp);
   await TampUserCollection.create(newUserData);
   return {
@@ -49,6 +49,7 @@ const createUserIntoDB = async (payload: TUser) => {
     message: 'OTP sent to your email. Please verify to complete registration.',
   };
 };
+
 
 const resetPasswordIntoDB = async (payload: any) => {
   const isUserExistsInUser = await User.findOne({ email: payload?.email });
@@ -84,11 +85,8 @@ const verifyOTPintoDB = async (email: string, otp: string, userType: any) => {
     throw new AppError(400, 'OTP has expired, please request a new one');
   }
 
-  const lastDocument = await User.findOne().sort({ _id: -1 }).exec();
-  const lastDocumentId = lastDocument?.Id || 0;
 
   const newUserData = {
-    Id: lastDocumentId + 1,
     email: tempUser.email,
     password: tempUser.password,
     name: tempUser.name,
@@ -119,9 +117,7 @@ const loginUserIntoDB = async (paylod: TLoginUser) => {
   const jwtPayload = {
     email: userData.email,
     name: userData.name,
-    userType: userData.userType,
-    sessionId: userData.sessionId,
-    createdAt: userData.createdAt
+    userId : userData._id
   };
 
   const accessToken = createToken(
@@ -154,11 +150,9 @@ const refreshToken = async (token: string) => {
   }
 
   const jwtPayload = {
-    email: userData.email,
     name: userData.name,
-    userType: userData.userType,
-    expiresDate: userData.expiresDate,
-    createdAt: userData.createdAt
+    email: userData.email,
+    userId : userData?._id
   };
 
   const accessToken = createToken(

@@ -3,19 +3,17 @@ import httpStatus from 'http-status';
 import { catchAsync } from '../../utils/catchAsync';
 import { UserServices } from './user.service';
 import config from '../../config';
-import { registerSuccessFullEmail } from '../../utils/sendEmail';
 
 
 
 
 
 const createUser = catchAsync(async (req, res) => {
-  const { user: userData } = req.body;
-  const result = await UserServices.createUserIntoDB(userData);
+  const result = await UserServices.createUserIntoDB(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'User Registered successFully',
+    message: 'OTP sent to your email. Please verify to complete registration',
     data: result,
   });
 });
@@ -75,10 +73,7 @@ const userDelete = catchAsync(async (req, res) => {
 
 const verifyOTP = catchAsync(async (req, res) => {
   const { email, otp, userType } = req.body;
-  const result = await UserServices.verifyOTPintoDB(email, otp, userType);
-  if(result){
-    await registerSuccessFullEmail(email)
-  }
+  const result = await UserServices.verifyOTPintoDB(email, otp, userType); 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
