@@ -72,8 +72,8 @@ const userDelete = catchAsync(async (req, res) => {
 });
 
 const verifyOTP = catchAsync(async (req, res) => {
-  const { email, otp, userType } = req.body;
-  const result = await UserServices.verifyOTPintoDB(email, otp, userType); 
+  const { email, otp } = req.body;
+  const result = await UserServices.verifyOTPintoDB(email, otp); 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

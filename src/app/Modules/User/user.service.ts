@@ -70,7 +70,7 @@ const userDeleteIntoDB = async (payload: any) => {
   return result
 }
 
-const verifyOTPintoDB = async (email: string, otp: string, userType: any) => {
+const verifyOTPintoDB = async (email: string, otp: string) => {
   const tempUser = await TampUserCollection.findOne({ email });
 
   if (!tempUser) {
@@ -89,8 +89,7 @@ const verifyOTPintoDB = async (email: string, otp: string, userType: any) => {
   const newUserData = {
     email: tempUser.email,
     password: tempUser.password,
-    name: tempUser.name,
-    userType
+    name: tempUser.name
   };
 
 
