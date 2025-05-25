@@ -6,8 +6,6 @@ import config from '../../config';
 
 
 
-
-
 const createUser = catchAsync(async (req, res) => {
   const result = await UserServices.createUserIntoDB(req.body);
   sendResponse(res, {
@@ -18,16 +16,29 @@ const createUser = catchAsync(async (req, res) => {
   });
 });
 
+
 const resetPassword = catchAsync(async (req, res) => {
-  const { user: userData } = req.body;
-  const result = await UserServices.resetPasswordIntoDB(userData);
+  const result = await UserServices.resetPasswordIntoDB(req?.body);   
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Password Reset successFully',
+    message: 'OTP send Your Email, reset password withen 2 minuts',
     data: result,
   });
 });
+
+const verifyOtpForResetPassword = catchAsync(async (req, res)=>{
+  const getOtpData = req.body;  
+  
+  const result = await UserServices.updatePasswordWithOtpVerification(getOtpData);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'reset password successfully!',
+    data: result,
+  });
+
+} )
 
 
 
@@ -92,4 +103,5 @@ export const userController = {
   verifyOTP,
   refreshToken,
   resetPassword,
+  verifyOtpForResetPassword,
 };

@@ -9,10 +9,16 @@ router.post(
   userController.createUser,
 );
 
-router.patch(
+router.post(
   '/resetPassword',
   userController.resetPassword,
 );
+
+router.patch(
+  '/sendOtpForResetPassword',
+  userController.verifyOtpForResetPassword,
+);
+
 
 router.post(
   '/login',

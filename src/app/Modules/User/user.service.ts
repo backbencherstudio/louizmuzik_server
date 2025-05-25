@@ -54,12 +54,47 @@ const createUserIntoDB = async (payload: TUser) => {
 const resetPasswordIntoDB = async (payload: any) => {
   const isUserExistsInUser = await User.findOne({ email: payload?.email });
   if (!isUserExistsInUser) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found")
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
   }
-  const hashedPassword = await bcrypt.hash(payload?.password, 8);
-  const result = await User.findOneAndUpdate({ email: payload.email }, { password: hashedPassword }, { new: true, runValidators: true })
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const result = {
+    name: "dummy name",
+    otp,
+    email: payload.email,
+    password: payload.password
+  };
+
+
+  const createOrUpdateOtp = await TampUserCollection.findOneAndUpdate(
+    { email: payload.email }, 
+    result,                   
+    { upsert: true, new: true } 
+  );
+
+  await sendEmail(payload?.email, otp);
+
+  return createOrUpdateOtp;
+};
+
+
+const updatePasswordWithOtpVerification = async (getOtpData: any) => {  
+  const existsData = await TampUserCollection.findOne({email : getOtpData?.email});
+  if (!existsData) {
+    return new AppError(httpStatus.NOT_FOUND,"Data not found")    
+  }
+  if (parseInt(getOtpData?.otp) !== parseInt(existsData.otp)) {
+    throw new AppError(httpStatus.NOT_ACCEPTABLE, "OTP not match")
+  } 
+  const hashedPassword = await bcrypt.hash(existsData?.password, 8);
+  const result = await User.findOneAndUpdate({ email: getOtpData.email }, { password: hashedPassword }, { new: true, runValidators: true })
+
+  if(result){
+    await TampUserCollection.findOneAndDelete({email  : existsData?.email})
+  }
+
   return result
 }
+
 
 const userDeleteIntoDB = async (payload: any) => {
   const isUserExists = await User.findOne({ email: payload });
@@ -175,5 +210,6 @@ export const UserServices = {
   verifyOTPintoDB,
   loginUserIntoDB,
   resetPasswordIntoDB,
+  updatePasswordWithOtpVerification,
   refreshToken,
 };
