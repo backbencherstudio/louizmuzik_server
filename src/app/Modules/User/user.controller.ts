@@ -7,7 +7,7 @@ import config from '../../config';
 
 
 const createUser = catchAsync(async (req, res) => {
-  const result = await UserServices.createUserIntoDB(req.body);
+  const result = await UserServices.createUserIntoDB(req.body);  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -42,7 +42,7 @@ const verifyOtpForResetPassword = catchAsync(async (req, res)=>{
 
 
 
-const loginUser = catchAsync(async (req, res) => {
+const loginUser = catchAsync(async (req, res) => {  
   const result = await UserServices.loginUserIntoDB(req.body);
   const { refreshToken, accessToken } = result;
   res.cookie('refreshToken', refreshToken, {

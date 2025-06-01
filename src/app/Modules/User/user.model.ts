@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import mongoose, { model, Schema } from "mongoose";
 import bcrypt from 'bcrypt';
 import { TampUser, TUser } from "./user.interface";
 
@@ -12,7 +12,7 @@ const TampUserSchema = new Schema<TampUser>(
       type: String,
       required: [true, "Otp is required"],
     },
-     name: {
+    name: {
       type: String,
       required: [true, "Name is required"],
     },
@@ -21,16 +21,17 @@ const TampUserSchema = new Schema<TampUser>(
       required: [true, "Email is required"],
       unique: true,
     },
+    country: { type: String, required: true },
     password: {
       type: String,
       required: [true, "Password is required"],
     },
-     isDeleted: {
+    isDeleted: {
       type: Boolean,
       default: false,
     },
-
     expiresAt: { type: Date, required: true },
+
 
   },
   {
@@ -45,7 +46,7 @@ const userSchema = new Schema<TUser>(
     id: {
       type: String,
     },
-     name: {
+    name: {
       type: String,
       required: [true, "Name is required"],
     },
@@ -54,14 +55,23 @@ const userSchema = new Schema<TUser>(
       required: [true, "Email is required"],
       unique: true,
     },
+    country: { type: String, required: true },
     password: {
       type: String,
-    },    
+    },
     isDeleted: {
       type: Boolean,
       default: false,
-    },   
-    
+    },
+    profile_image: { type: String, default: '' },
+    isPro: { type: Boolean, default: false },
+    followersCounter: { type: Number, default: 0 },
+    melodiesCounter: { type: Number, default: 0 },
+    about: { type: String, default: '' },
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    favourite_melodies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Melody' }],
+    favourite_packs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pack' }],
+
   },
   {
     timestamps: true,

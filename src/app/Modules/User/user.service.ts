@@ -38,18 +38,20 @@ const createUserIntoDB = async (payload: TUser) => {
     email: payload?.email,
     password: hashedPassword,
     name: payload?.name,
+    country : payload?.country,
     otp,
     expiresAt: expirationTime,
   };
   
   await sendEmail(payload?.email, otp);
-  await TampUserCollection.create(newUserData);
+   await TampUserCollection.create(newUserData);
+
   return {
     success: true,
     message: 'OTP sent to your email. Please verify to complete registration.',
+    
   };
 };
-
 
 const resetPasswordIntoDB = async (payload: any) => {
   const isUserExistsInUser = await User.findOne({ email: payload?.email });
@@ -64,7 +66,6 @@ const resetPasswordIntoDB = async (payload: any) => {
     password: payload.password
   };
 
-
   const createOrUpdateOtp = await TampUserCollection.findOneAndUpdate(
     { email: payload.email }, 
     result,                   
@@ -72,10 +73,8 @@ const resetPasswordIntoDB = async (payload: any) => {
   );
 
   await sendEmail(payload?.email, otp);
-
   return createOrUpdateOtp;
 };
-
 
 const updatePasswordWithOtpVerification = async (getOtpData: any) => {  
   const existsData = await TampUserCollection.findOne({email : getOtpData?.email});
@@ -94,7 +93,6 @@ const updatePasswordWithOtpVerification = async (getOtpData: any) => {
 
   return result
 }
-
 
 const userDeleteIntoDB = async (payload: any) => {
   const isUserExists = await User.findOne({ email: payload });
@@ -120,14 +118,12 @@ const verifyOTPintoDB = async (email: string, otp: string) => {
     throw new AppError(400, 'OTP has expired, please request a new one');
   }
 
-
   const newUserData = {
     email: tempUser.email,
     password: tempUser.password,
-    name: tempUser.name
+    name: tempUser.name,
+    country : tempUser.country
   };
-
-
 
   await User.create(newUserData);
   await TampUserCollection.deleteOne({ email });
@@ -199,8 +195,6 @@ const refreshToken = async (token: string) => {
     accessToken,
   };
 };
-
-
 
 
 

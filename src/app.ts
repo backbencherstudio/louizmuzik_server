@@ -5,7 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import router from './app/routes';
 import globalErrorHandler from './app/middleware/globalErrorHandlear';
-  
+
 const app: Application = express();
 
 app.use(express.json());
@@ -21,10 +21,11 @@ app.get('/test', async (req, res) => {
   const a = 'server running successfully';
   res.send(a);
 });
-  
+
 app.use("/api/v1", router)
 
 app.use('/uploads', express.static('uploads'));  
+
 
 
 app.get("/",(req, res)=>{

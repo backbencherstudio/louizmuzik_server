@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 // ======================================>>>>>>>> Register Interface
 
@@ -8,9 +8,18 @@ export interface TUser {
   otp: string;
   name: string;
   email: string;
+  country: string;
   password: string;
   isDeleted: boolean;
-  expiresAt : Date
+  expiresAt : Date;
+  profile_image: string;
+  isPro: boolean;
+  followersCounter: number;
+  melodiesCounter: number;
+  about: string;
+  following: Types.ObjectId[]; 
+  favourite_melodies: Types.ObjectId[]; 
+  favourite_packs: Types.ObjectId[];
 }
 
 // ======================================>>>>>>>> Login Interface
