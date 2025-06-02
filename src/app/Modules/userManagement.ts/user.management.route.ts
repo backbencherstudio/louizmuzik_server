@@ -11,6 +11,11 @@ router.patch(
   UserManagementController.updateUserData,
 );
 
+router.patch(
+  '/changePassword/:userId',
+  UserManagementController.changePassword,
+);
+
 
 
 
