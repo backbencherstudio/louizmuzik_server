@@ -19,7 +19,6 @@ router.patch(
   userController.verifyOtpForResetPassword,
 );
 
-
 router.post(
   '/login',
   userController.loginUser,
@@ -39,5 +38,9 @@ router.post(
   '/refresh-token',
   userController.refreshToken,
 );
+
+
+
+
 
 export const UserRouter = router;

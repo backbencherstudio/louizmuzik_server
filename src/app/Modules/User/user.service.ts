@@ -37,7 +37,7 @@ const createUserIntoDB = async (payload: TUser) => {
   const newUserData = {
     email: payload?.email,
     password: hashedPassword,
-    name: payload?.name,
+    producer_name: payload?.producer_name,
     country : payload?.country,
     otp,
     expiresAt: expirationTime,
@@ -60,7 +60,7 @@ const resetPasswordIntoDB = async (payload: any) => {
   }
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const result = {
-    name: "dummy name",
+    producer_name: "dummy name",
     otp,
     email: payload.email,
     password: payload.password
@@ -121,7 +121,7 @@ const verifyOTPintoDB = async (email: string, otp: string) => {
   const newUserData = {
     email: tempUser.email,
     password: tempUser.password,
-    name: tempUser.name,
+    producer_name: tempUser.producer_name,
     country : tempUser.country
   };
 
@@ -146,7 +146,7 @@ const loginUserIntoDB = async (paylod: TLoginUser) => {
 
   const jwtPayload = {
     email: userData.email,
-    name: userData.name,
+    producer_name: userData.producer_name,
     userId : userData._id
   };
 
@@ -180,7 +180,7 @@ const refreshToken = async (token: string) => {
   }
 
   const jwtPayload = {
-    name: userData.name,
+    producer_name: userData.producer_name,
     email: userData.email,
     userId : userData?._id
   };

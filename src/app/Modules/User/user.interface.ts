@@ -7,6 +7,7 @@ export interface TUser {
   id: string;
   otp: string;
   name: string;
+  producer_name: string;
   email: string;
   country: string;
   password: string;
@@ -20,6 +21,10 @@ export interface TUser {
   following: Types.ObjectId[]; 
   favourite_melodies: Types.ObjectId[]; 
   favourite_packs: Types.ObjectId[];
+  beatstarsUsername?: string;
+  instagramUsername?: string;
+  youtubeUsername?: string;
+  tiktokUsername?: string;
 }
 
 // ======================================>>>>>>>> Login Interface

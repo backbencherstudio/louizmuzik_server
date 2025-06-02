@@ -12,9 +12,9 @@ const TampUserSchema = new Schema<TampUser>(
       type: String,
       required: [true, "Otp is required"],
     },
-    name: {
+    producer_name: {
       type: String,
-      required: [true, "Name is required"],
+      required: [true, "producer name is required"],
     },
     email: {
       type: String,
@@ -46,9 +46,12 @@ const userSchema = new Schema<TUser>(
     id: {
       type: String,
     },
+    producer_name: {
+      type: String,
+      required: [true, "producer name is required"],
+    },
     name: {
       type: String,
-      required: [true, "Name is required"],
     },
     email: {
       type: String,
@@ -71,6 +74,10 @@ const userSchema = new Schema<TUser>(
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     favourite_melodies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Melody' }],
     favourite_packs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pack' }],
+    beatstarsUsername: { type: String },
+    instagramUsername: { type: String },
+    youtubeUsername: { type: String },
+    tiktokUsername: { type: String },
 
   },
   {
