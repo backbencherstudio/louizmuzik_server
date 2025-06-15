@@ -1,0 +1,151 @@
+// === STEP 1: .env ===
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=ap-south-1
+S3_BUCKET_NAME=your-bucket-name
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname
+PORT=5000
+
+// === STEP 2: Backend Folder Structure ===
+- backend/
+  - src/
+    - config/s3.ts
+    - models/Audio.model.ts
+    - controllers/upload.controller.ts
+    - routes/upload.routes.ts
+    - index.ts
+  - .env
+  - tsconfig.json
+  - package.json
+
+// === STEP 3: s3.ts ===
+import AWS from 'aws-sdk';
+import dotenv from 'dotenv';
+dotenv.config();
+
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
+});
+
+export const s3 = new AWS.S3();
+
+// === STEP 4: Audio.model.ts ===
+import mongoose from 'mongoose';
+
+const AudioSchema = new mongoose.Schema({
+  filename: String,
+  audioUrl: String,
+  imageUrl: String,
+  zipUrl: String,
+  producer: String,
+  email: String,
+  phoneNumber: String,
+  userId: String,
+}, { timestamps: true });
+
+export const Audio = mongoose.model('Audio', AudioSchema);
+
+// === STEP 5: upload.controller.ts ===
+import { Request, Response } from 'express';
+import { s3 } from '../config/s3';
+import { Audio } from '../models/Audio.model';
+import { v4 as uuidv4 } from 'uuid';
+
+const BUCKET_NAME = process.env.S3_BUCKET_NAME!;
+
+export const generateMultiPresignedUrls = async (req: Request, res: Response) => {
+  const { audioName, imageName, zipName, producer, email, phoneNumber, userId } = req.body;
+  if (!audioName || !imageName || !zipName || !producer || !email || !phoneNumber || !userId) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  try {
+    const audioKey = `uploads/audio/${uuidv4()}-${audioName}`;
+    const imageKey = `uploads/image/${uuidv4()}-${imageName}`;
+    const zipKey = `uploads/zip/${uuidv4()}-${zipName}`;
+
+    const [audioUrl, imageUrl, zipUrl] = await Promise.all([
+      s3.getSignedUrlPromise('putObject', {
+        Bucket: BUCKET_NAME,
+        Key: audioKey,
+        Expires: 60 * 60,
+        ContentType: 'audio/mpeg',
+      }),
+      s3.getSignedUrlPromise('putObject', {
+        Bucket: BUCKET_NAME,
+        Key: imageKey,
+        Expires: 60 * 60,
+        ContentType: 'image/jpeg',
+      }),
+      s3.getSignedUrlPromise('putObject', {
+        Bucket: BUCKET_NAME,
+        Key: zipKey,
+        Expires: 60 * 60,
+        ContentType: 'application/zip',
+      }),
+    ]);
+
+    const audioPublic = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${audioKey}`;
+    const imagePublic = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageKey}`;
+    const zipPublic = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${zipKey}`;
+
+    return res.json({
+      audio: { uploadUrl: audioUrl, publicUrl: audioPublic, key: audioKey },
+      image: { uploadUrl: imageUrl, publicUrl: imagePublic, key: imageKey },
+      zip: { uploadUrl: zipUrl, publicUrl: zipPublic, key: zipKey },
+      metadata: { producer, email, phoneNumber, userId, audioName },
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to generate URLs' });
+  }
+};
+
+export const confirmMultiUpload = async (req: Request, res: Response) => {
+  const { audioKey, imageKey, zipKey, audioName, producer, email, phoneNumber, userId } = req.body;
+  try {
+    const metaChecks = await Promise.all([
+      s3.headObject({ Bucket: BUCKET_NAME, Key: audioKey }).promise(),
+      s3.headObject({ Bucket: BUCKET_NAME, Key: imageKey }).promise(),
+      s3.headObject({ Bucket: BUCKET_NAME, Key: zipKey }).promise(),
+    ]);
+
+    const allUploaded = metaChecks.every(meta => meta.ContentLength && meta.ContentLength > 1024);
+    if (!allUploaded) return res.status(400).json({ error: 'Files not fully uploaded' });
+
+    const audioUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${audioKey}`;
+    const imageUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageKey}`;
+    const zipUrl = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${zipKey}`;
+
+    await Audio.create({ filename: audioName, audioUrl, imageUrl, zipUrl, producer, email, phoneNumber, userId });
+    return res.status(200).json({ message: 'Upload confirmed and saved' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error confirming upload' });
+  }
+};
+
+// === STEP 6: upload.routes.ts ===
+import { Router } from 'express';
+import { generateMultiPresignedUrls, confirmMultiUpload } from '../controllers/upload.controller';
+
+const router = Router();
+router.post('/generate-multi-url', generateMultiPresignedUrls);
+router.post('/confirm-multi-upload', confirmMultiUpload);
+export default router;
+
+// === STEP 7: index.ts (Express entrypoint) ===
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import uploadRoutes from './routes/upload.routes';
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+app.use('/api', uploadRoutes);
+
+mongoose.connect(process.env.MONGO_URI!).then(() => {
+  console.log('MongoDB connected');
+  app.listen(process.env.PORT || 5000, () => console.log('Server running'));
+}).catch(err => console.error(err));
