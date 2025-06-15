@@ -2,7 +2,7 @@ import { model, Schema } from "mongoose";
 import { Tmelody } from "./melody.interface";
 
 const MelodySchema = new Schema<Tmelody>(
-    {
+  {
     userId: { type: String, required: [true, 'User ID is required'] },
     name: { type: String, required: [true, 'name is required'] },
     image: { type: String, required: [true, 'Image URL is required'] },
