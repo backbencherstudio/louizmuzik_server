@@ -4,6 +4,11 @@ import { melodyController } from './melody.controller';
 const router = express.Router();
 
 
+router.get(
+  '/',
+  melodyController.getAllMelodyes
+);
+
 router.post(
   '/create-melody',
   melodyController.melodyCreateByProducer
@@ -22,6 +27,11 @@ router.delete(
 router.patch(
   '/:melodyId',
   melodyController.selectFavoriteMelody
+);
+
+router.patch(
+  '/eachMelodyDownloadCounter/:melodyId',
+  melodyController.eachMelodyDownloadCounter
 );
 
 

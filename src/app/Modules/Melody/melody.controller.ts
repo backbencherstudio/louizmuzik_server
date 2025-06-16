@@ -3,6 +3,16 @@ import { catchAsync } from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { melodyService } from "./melody.service";
 
+const getAllMelodyes = catchAsync(async (req, res) => {
+    const result = await melodyService.getAllMelodyes();
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'get all melodies',
+        data: result,
+    });
+});
+
 const melodyCreateByProducer = catchAsync(async (req, res) => {
     const result = await melodyService.melodyCreateByProducer(req.body);
     sendResponse(res, {
@@ -46,11 +56,24 @@ const selectFavoriteMelody = catchAsync(async (req, res) => {
     });
 });
 
+const eachMelodyDownloadCounter = catchAsync(async (req, res) => {
+    const melodyId = req.params.melodyId
+    await melodyService.eachMelodyDownloadCounter(melodyId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Melody download successfully',
+        data: true,
+    });
+});
+
 
 
 export const melodyController = {
+    getAllMelodyes,
     melodyCreateByProducer,
     getAllMelodesEachProducer,
     deleteMelodesEachProducer,
-    selectFavoriteMelody
+    selectFavoriteMelody,
+    eachMelodyDownloadCounter
 }

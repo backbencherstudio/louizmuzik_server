@@ -3,41 +3,31 @@ import { User } from "../User/user.model"
 import { Tmelody } from "./melody.interface"
 import { Melody } from "./melody.module"
 
+const getAllMelodyes = async () =>{
+  const result = await Melody.find();
+  return result
+}
+
 const melodyCreateByProducer = async (payload: Tmelody) => {
-    const result = await Melody.create(payload)
-    return result
+  const result = await Melody.create(payload)
+  return result
 }
 
 const getAllMelodesEachProducer = async (userId: string) => {
-    const result = await Melody.find({ userId })
-    return result
+  const result = await Melody.find({ userId })
+  return result
 }
 
 const deleteMelodesEachProducer = async (melodyId: string) => {
-    const result = await Melody.deleteOne({ _id: melodyId })
-    return result
+  const result = await Melody.deleteOne({ _id: melodyId })
+  return result
 }
-
-// const selectFavoriteMelody = async (melodyId: string, userId: string) => {
-//     console.log(melodyId, userId);
-//     await Melody.findByIdAndUpdate(
-//         { _id: melodyId },
-//         { $inc: { favorites: 1 } },
-//         { new: true, runValidators: true }
-//     )
-
-//     await User.findByIdAndUpdate({_id : userId}, {
-//         favourite_melodies : 
-//     } )
-
-// }
 
 const selectFavoriteMelody = async (melodyId: string, userId: string) => {
   const melodyObjectId = new mongoose.Types.ObjectId(melodyId);
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
   const user = await User.findById(userObjectId);
-
   if (!user) {
     throw new Error("User not found");
   }
@@ -79,11 +69,17 @@ const selectFavoriteMelody = async (melodyId: string, userId: string) => {
   }
 };
 
+const eachMelodyDownloadCounter = async (id: string) => {
+  const result = await Melody.findByIdAndUpdate({ _id: id }, { $inc: { downloads: 1 } })
+  return result
+}
 
 
 export const melodyService = {
-    melodyCreateByProducer,
-    getAllMelodesEachProducer,
-    deleteMelodesEachProducer,
-    selectFavoriteMelody
+  getAllMelodyes,
+  melodyCreateByProducer,
+  getAllMelodesEachProducer,
+  deleteMelodesEachProducer,
+  selectFavoriteMelody,
+  eachMelodyDownloadCounter
 }
