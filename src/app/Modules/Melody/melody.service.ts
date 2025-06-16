@@ -18,7 +18,7 @@ const melodyCreateByProducer = async (payload: Tmelody) => {
       { new: true, runValidators: true }
     )
   }
-  
+
   return result
 }
 
@@ -27,8 +27,16 @@ const getAllMelodesEachProducer = async (userId: string) => {
   return result
 }
 
-const deleteMelodesEachProducer = async (melodyId: string) => {
+const deleteMelodesEachProducer = async (melodyId: string, userId: string) => {
   const result = await Melody.deleteOne({ _id: melodyId })
+
+  if (result?.acknowledged && result?.deletedCount > 0) {
+    await User.findByIdAndUpdate(
+      { _id: userId },
+      { $inc: { melodiesCounter: -1 } },
+      { new: true, runValidators: true }
+    )
+  }
   return result
 }
 

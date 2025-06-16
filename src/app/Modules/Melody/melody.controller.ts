@@ -34,7 +34,7 @@ const getAllMelodesEachProducer = catchAsync(async (req, res) => {
 });
 
 const deleteMelodesEachProducer = catchAsync(async (req, res) => {
-    const result = await melodyService.deleteMelodesEachProducer(req.params.melodyId);
+    const result = await melodyService.deleteMelodesEachProducer(req.params.melodyId, req.query.userId as string );
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
