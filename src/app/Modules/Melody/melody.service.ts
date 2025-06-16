@@ -3,13 +3,22 @@ import { User } from "../User/user.model"
 import { Tmelody } from "./melody.interface"
 import { Melody } from "./melody.module"
 
-const getAllMelodyes = async () =>{
+const getAllMelodyes = async () => {
   const result = await Melody.find();
   return result
 }
 
 const melodyCreateByProducer = async (payload: Tmelody) => {
   const result = await Melody.create(payload)
+
+  if (result) {
+    await User.findByIdAndUpdate(
+      { _id: payload.userId },
+      { $inc: { melodiesCounter: 1 } },
+      { new: true, runValidators: true }
+    )
+  }
+  
   return result
 }
 
