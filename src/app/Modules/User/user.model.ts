@@ -48,10 +48,15 @@ const userSchema = new Schema<TUser>(
     },
     producer_name: {
       type: String,
-      required: [true, "producer name is required"],
+      // required: [true, "producer name is required"],
     },
     name: {
       type: String,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: "user"
     },
     email: {
       type: String,

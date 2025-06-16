@@ -5,6 +5,11 @@ const router = express.Router();
 
 
 router.post(
+  '/create-admin',
+  userController.createAdmin,
+);
+
+router.post(
   '/create-user',
   userController.createUser,
 );

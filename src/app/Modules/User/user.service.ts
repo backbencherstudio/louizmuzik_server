@@ -9,7 +9,20 @@ import { sendEmail } from "../../utils/sendEmail";
 import { createToken, verifyToken } from "./user.utils";
 
 
-const createUserIntoDB = async (payload: TUser) => {  
+const createAdmin = async () => {
+  const hashedPassword = await bcrypt.hash("123456", 8);
+  const adminData = {
+    name: "admin name",
+    email: "admin@gmail.com",
+    password: hashedPassword,
+    country: "USA",
+    role : "admin"
+  }
+  const result = await User.create(adminData)
+  return result
+}
+
+const createUserIntoDB = async (payload: TUser) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expirationTime = new Date(Date.now() + 2 * 60 * 1000);
 
@@ -24,9 +37,12 @@ const createUserIntoDB = async (payload: TUser) => {
 
   if (isStudentExists) {
     const data = {
-      otp,
+      email: payload?.email,
       password: hashedPassword,
-      expiresAt: expirationTime
+      producer_name: payload?.producer_name,
+      country: payload?.country,
+      otp,
+      expiresAt: expirationTime,
     }
 
     await TampUserCollection.findOneAndUpdate({ email: payload?.email }, data, { new: true, runValidators: true })
@@ -38,18 +54,18 @@ const createUserIntoDB = async (payload: TUser) => {
     email: payload?.email,
     password: hashedPassword,
     producer_name: payload?.producer_name,
-    country : payload?.country,
+    country: payload?.country,
     otp,
     expiresAt: expirationTime,
   };
-  
+
   await sendEmail(payload?.email, otp);
-   await TampUserCollection.create(newUserData);
+  await TampUserCollection.create(newUserData);
 
   return {
     success: true,
     message: 'OTP sent to your email. Please verify to complete registration.',
-    
+
   };
 };
 
@@ -67,28 +83,28 @@ const resetPasswordIntoDB = async (payload: any) => {
   };
 
   const createOrUpdateOtp = await TampUserCollection.findOneAndUpdate(
-    { email: payload.email }, 
-    result,                   
-    { upsert: true, new: true } 
+    { email: payload.email },
+    result,
+    { upsert: true, new: true }
   );
 
   await sendEmail(payload?.email, otp);
   return createOrUpdateOtp;
 };
 
-const updatePasswordWithOtpVerification = async (getOtpData: any) => {  
-  const existsData = await TampUserCollection.findOne({email : getOtpData?.email});
+const updatePasswordWithOtpVerification = async (getOtpData: any) => {
+  const existsData = await TampUserCollection.findOne({ email: getOtpData?.email });
   if (!existsData) {
-    return new AppError(httpStatus.NOT_FOUND,"Data not found")    
+    return new AppError(httpStatus.NOT_FOUND, "Data not found")
   }
   if (parseInt(getOtpData?.otp) !== parseInt(existsData.otp)) {
     throw new AppError(httpStatus.NOT_ACCEPTABLE, "OTP not match")
-  } 
+  }
   const hashedPassword = await bcrypt.hash(existsData?.password, 8);
   const result = await User.findOneAndUpdate({ email: getOtpData.email }, { password: hashedPassword }, { new: true, runValidators: true })
 
-  if(result){
-    await TampUserCollection.findOneAndDelete({email  : existsData?.email})
+  if (result) {
+    await TampUserCollection.findOneAndDelete({ email: existsData?.email })
   }
 
   return result
@@ -122,7 +138,7 @@ const verifyOTPintoDB = async (email: string, otp: string) => {
     email: tempUser.email,
     password: tempUser.password,
     producer_name: tempUser.producer_name,
-    country : tempUser.country
+    country: tempUser.country
   };
 
   await User.create(newUserData);
@@ -147,7 +163,7 @@ const loginUserIntoDB = async (paylod: TLoginUser) => {
   const jwtPayload = {
     email: userData.email,
     producer_name: userData.producer_name,
-    userId : userData._id
+    userId: userData._id
   };
 
   const accessToken = createToken(
@@ -182,7 +198,7 @@ const refreshToken = async (token: string) => {
   const jwtPayload = {
     producer_name: userData.producer_name,
     email: userData.email,
-    userId : userData?._id
+    userId: userData?._id
   };
 
   const accessToken = createToken(
@@ -199,6 +215,7 @@ const refreshToken = async (token: string) => {
 
 
 export const UserServices = {
+  createAdmin,
   createUserIntoDB,
   userDeleteIntoDB,
   verifyOTPintoDB,

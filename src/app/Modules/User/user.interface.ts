@@ -9,6 +9,7 @@ export interface TUser {
   name: string;
   producer_name: string;
   email: string;
+  role: 'user' | 'admin';
   country: string;
   password: string;
   isDeleted: boolean;

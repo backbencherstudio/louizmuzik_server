@@ -6,6 +6,16 @@ import config from '../../config';
 
 
 
+const createAdmin = catchAsync(async (req, res) => {
+  const result = await UserServices.createAdmin();  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'admin created successfully',
+    data: result,
+  });
+});
+
 const createUser = catchAsync(async (req, res) => {
   const result = await UserServices.createUserIntoDB(req.body);  
   sendResponse(res, {
@@ -97,6 +107,7 @@ const verifyOTP = catchAsync(async (req, res) => {
 
 
 export const userController = {
+  createAdmin,
   createUser,
   loginUser,
   userDelete,
