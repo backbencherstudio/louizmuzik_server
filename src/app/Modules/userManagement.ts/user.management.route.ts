@@ -16,6 +16,11 @@ router.patch(
   UserManagementController.changePassword,
 );
 
+router.patch(
+  '/followingProducersCalculation/:currentUserId',
+  UserManagementController.followingProducersCalculation,
+);
+
 
 
 

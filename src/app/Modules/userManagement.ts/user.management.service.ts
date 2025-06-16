@@ -8,6 +8,7 @@ import { TUser } from "../User/user.interface";
 import { User } from "../User/user.model";
 import { AppError } from '../../errors/AppErrors';
 import httpStatus from 'http-status';
+import mongoose from 'mongoose';
 
 const getAbsoluteFilePath = async (dbPath: string) => {
     try {
@@ -53,7 +54,55 @@ const changePasswordIntoDB = async (userId: string, paylod: any) => {
 }
 
 
+const followingProducersCalculation = async (currentUserId: string, producerUserId: string) => {
+  const currentUserObjectId = new mongoose.Types.ObjectId(currentUserId);
+  const producerUserObjectId = new mongoose.Types.ObjectId(producerUserId);
+
+  const currentUser = await User.findById(currentUserObjectId);
+  if (!currentUser) throw new Error("Current user not found");
+
+  const isAlreadyFollowing = currentUser.following.some(
+    (id) => id.toString() === producerUserId
+  );
+
+  if (isAlreadyFollowing) {
+    // Unfollow: remove producer ID from currentUser.following & decrease producer's followersCounter
+    await User.findByIdAndUpdate(
+      currentUserObjectId,
+      { $pull: { following: producerUserObjectId } },
+      { new: true, runValidators: true }
+    );
+
+    await User.findByIdAndUpdate(
+      producerUserObjectId,
+      { $inc: { followersCounter: -1 } },
+      { new: true, runValidators: true }
+    );
+
+    return { message: "You have unfollowed this user." };
+  } else {
+    //  Follow: add producer ID to currentUser.following & increase producer's followersCounter
+    await User.findByIdAndUpdate(
+      currentUserObjectId,
+      { $addToSet: { following: producerUserObjectId } },
+      { new: true, runValidators: true }
+    );
+
+    await User.findByIdAndUpdate(
+      producerUserObjectId,
+      { $inc: { followersCounter: 1 } },
+      { new: true, runValidators: true }
+    );
+
+    return { message: "You are now following this user." };
+  }
+};
+
+
+
+
 export const UserManagement = {
     updateUserDataIntoDB,
-    changePasswordIntoDB
+    changePasswordIntoDB,
+    followingProducersCalculation
 }

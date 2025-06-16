@@ -16,9 +16,9 @@ export interface TUser {
   expiresAt : Date;
   profile_image: string;
   isPro: boolean;
-  followersCounter: number;
   melodiesCounter: number;
   about: string;
+  followersCounter: number;
   following: Types.ObjectId[]; 
   favourite_melodies: Types.ObjectId[]; 
   favourite_packs: Types.ObjectId[];

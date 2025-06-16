@@ -31,9 +31,23 @@ const changePassword = catchAsync(async (req, res) => {
   });
 });
 
+const followingProducersCalculation = catchAsync(async (req, res) => {
+  const currentUserId = req.params.currentUserId
+  const producerUserId = req.query.producerUserId
+
+  const result = await UserManagement.followingProducersCalculation(currentUserId, producerUserId as string);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'You are now following this producer.',
+    data: result,
+  });
+});
+
 
 
 export const UserManagementController = {
   updateUserData,
-  changePassword
+  changePassword,
+  followingProducersCalculation
 }
