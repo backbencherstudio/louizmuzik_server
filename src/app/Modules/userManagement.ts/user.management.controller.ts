@@ -44,10 +44,21 @@ const followingProducersCalculation = catchAsync(async (req, res) => {
   });
 });
 
+const allProducersDataWithTopProducersData = catchAsync(async (req, res) => {
+  const result = await UserManagement.allProducersDataWithTopProducersData();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'get all producers with top 5 producers.',
+    data: result,
+  });
+});
+
 
 
 export const UserManagementController = {
   updateUserData,
   changePassword,
-  followingProducersCalculation
+  followingProducersCalculation,
+  allProducersDataWithTopProducersData
 }

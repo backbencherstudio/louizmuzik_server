@@ -95,9 +95,18 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
 };
 
 
-// const allProducersDataWithTopProducersData = () =>{
+const allProducersDataWithTopProducersData = async () =>{
+const top5Producers = await User.find({ role: "user", isDeleted: false })
+  .sort({ followersCounter: -1 })
+  .limit(5);
 
-// }
+const allProducers = await User.find({
+  isDeleted: false,
+  role : "user"
+});
+
+return { top5Producers, allProducers }
+}
 
 
 
@@ -107,5 +116,6 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
 export const UserManagement = {
     updateUserDataIntoDB,
     changePasswordIntoDB,
-    followingProducersCalculation
+    followingProducersCalculation,
+    allProducersDataWithTopProducersData
 }

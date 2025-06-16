@@ -4,6 +4,10 @@ import { upload } from '../../middleware/uploads';
 
 const router = express.Router();
 
+router.get(
+  '/allProducersDataWithTopProducersData',
+  UserManagementController.allProducersDataWithTopProducersData,
+);
 
 router.patch(
   '/:userId',
@@ -20,6 +24,7 @@ router.patch(
   '/followingProducersCalculation/:currentUserId',
   UserManagementController.followingProducersCalculation,
 );
+
 
 
 
