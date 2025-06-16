@@ -24,9 +24,6 @@ const getAbsoluteFilePath = async (dbPath: string) => {
 };
 
 
-
-
-
 const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => {
     const isExistsUserData = await User.findById({ _id: userId }).select("profile_image")
     if (isExistsUserData?.profile_image && payload?.profile_image !== undefined) {
@@ -52,7 +49,6 @@ const changePasswordIntoDB = async (userId: string, paylod: any) => {
     const hashedPassword = await bcrypt.hash(paylod?.new_password, 8);
     await User.findOneAndUpdate({ _id: userId }, { password: hashedPassword }, { new: true, runValidators: true })
 }
-
 
 const followingProducersCalculation = async (currentUserId: string, producerUserId: string) => {
   const currentUserObjectId = new mongoose.Types.ObjectId(currentUserId);
@@ -97,6 +93,13 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
     return { message: "You are now following this user." };
   }
 };
+
+
+// const allProducersDataWithTopProducersData = () =>{
+
+// }
+
+
 
 
 

@@ -1,9 +1,9 @@
 import { model, Schema } from "mongoose";
-import { Tmelody } from "./melody.interface";
+import { TdailyMelodyDownloadStats, Tmelody } from "./melody.interface";
 
 const MelodySchema = new Schema<Tmelody>(
   {
-    userId: { type: String, required: [true, 'User ID is required'] },
+    userId: { type: String, ref: 'User', required: [true, 'User ID is required'] },
     name: { type: String, required: [true, 'name is required'] },
     image: { type: String, required: [true, 'Image URL is required'] },
     audioUrl: { type: String, required: [true, 'Audio URL is required'] },
@@ -20,7 +20,22 @@ const MelodySchema = new Schema<Tmelody>(
   },
   {
     timestamps: true,
+    versionKey: false
   }
 )
+
+const dailyMelodyDownloadStats = new Schema<TdailyMelodyDownloadStats>({
+  producerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  date: { type: String, required: true },
+  downloads: { type: Number, default: 0 },
+  day: {
+    type: String,
+    enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    required: true,
+  },
+}, { timestamps: true,
+    versionKey: false });
+
+export const DailyMelodyDownloadStats = model('DailyMelodyDownloadStats', dailyMelodyDownloadStats);
 
 export const Melody = model<Tmelody>('Melody', MelodySchema);

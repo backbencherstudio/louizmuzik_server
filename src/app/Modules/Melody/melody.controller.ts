@@ -67,6 +67,17 @@ const eachMelodyDownloadCounter = catchAsync(async (req, res) => {
     });
 });
 
+const melodyPlay = catchAsync(async (req, res) => {
+    const melodyId = req.params.melodyId
+    await melodyService.melodyPlay(melodyId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Melody play',
+        data: true,
+    });
+});
+
 
 
 export const melodyController = {
@@ -75,5 +86,6 @@ export const melodyController = {
     getAllMelodesEachProducer,
     deleteMelodesEachProducer,
     selectFavoriteMelody,
-    eachMelodyDownloadCounter
+    eachMelodyDownloadCounter,
+    melodyPlay
 }

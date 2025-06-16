@@ -1,7 +1,8 @@
 import mongoose from "mongoose"
 import { User } from "../User/user.model"
 import { Tmelody } from "./melody.interface"
-import { Melody } from "./melody.module"
+import { DailyMelodyDownloadStats, Melody } from "./melody.module"
+import dayjs from 'dayjs';
 
 const getAllMelodyes = async () => {
   const result = await Melody.find();
@@ -86,9 +87,33 @@ const selectFavoriteMelody = async (melodyId: string, userId: string) => {
   }
 };
 
+
 const eachMelodyDownloadCounter = async (id: string) => {
-  const result = await Melody.findByIdAndUpdate({ _id: id }, { $inc: { downloads: 1 } })
-  return result
+  const melody = await Melody.findByIdAndUpdate(
+    { _id: id },
+    { $inc: { downloads: 1 } },
+    { new: true, runValidators: true }
+  );
+
+  if (!melody) throw new Error("Melody not found");
+
+  const currentDate = dayjs().format("YYYY-MM-DD");
+  const currentDay = dayjs().format("ddd")
+
+  await DailyMelodyDownloadStats.findOneAndUpdate(
+    { producerId: melody.userId, date: currentDate },
+    {
+      $inc: { downloads: 1 },
+      $setOnInsert: { day: currentDay },
+    },
+    { upsert: true, new: true }
+  );
+
+  return melody;
+};
+
+const melodyPlay = async (id: string) => {
+  await Melody.findByIdAndUpdate({ _id: id }, { $inc: { plays: 1 } }, { new: true, runValidators: true })
 }
 
 
@@ -98,5 +123,6 @@ export const melodyService = {
   getAllMelodesEachProducer,
   deleteMelodesEachProducer,
   selectFavoriteMelody,
-  eachMelodyDownloadCounter
+  eachMelodyDownloadCounter,
+  melodyPlay
 }

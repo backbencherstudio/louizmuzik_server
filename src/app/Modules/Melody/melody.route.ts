@@ -34,6 +34,11 @@ router.patch(
   melodyController.eachMelodyDownloadCounter
 );
 
+router.patch(
+  '/melodyPlay/:melodyId',
+  melodyController.melodyPlay
+);
+
 
 
 export const MelodyRouter = router;
