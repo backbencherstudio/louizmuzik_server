@@ -9,6 +9,21 @@ router.post(
   melodyController.melodyCreateByProducer
 );
 
+router.get(
+  '/:userId',
+  melodyController.getAllMelodesEachProducer
+);
+
+router.delete(
+  '/:melodyId',
+  melodyController.deleteMelodesEachProducer
+);
+
+router.patch(
+  '/:melodyId',
+  melodyController.selectFavoriteMelody
+);
+
 
 
 export const MelodyRouter = router;
