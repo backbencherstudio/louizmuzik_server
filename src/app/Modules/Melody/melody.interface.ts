@@ -1,8 +1,8 @@
-import { Types } from "mongoose";
+import { Schema } from "mongoose";
 
 export interface Tmelody {
   id: string;
-  userId: string;
+  userId: Schema.Types.ObjectId;
   name: string;
   image: string;
   producer: string;
@@ -21,7 +21,7 @@ export interface Tmelody {
 export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 
 export interface TdailyMelodyDownloadStats {
-  producerId: Types.ObjectId;
+  producerId: Schema.Types.ObjectId;
   date: string; 
   downloads: number;
   day: DayOfWeek;

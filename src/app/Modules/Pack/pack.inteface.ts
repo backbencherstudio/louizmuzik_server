@@ -1,6 +1,8 @@
+import { Schema } from "mongoose";
+
 export interface IPack {
   id: string;
-  userId: string;
+  userId: Schema.Types.ObjectId;
   title: string;
   producer: string;
   thumbnail_image: string;
@@ -14,4 +16,5 @@ export interface IPack {
   waveform: string;
   bpm: number;
   key: string;
+  highlight : boolean  // this is for marketplace page hero section
 }

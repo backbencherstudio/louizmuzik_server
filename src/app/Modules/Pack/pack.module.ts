@@ -3,8 +3,8 @@ import { IPack } from "./pack.inteface";
 
 const packSchema = new Schema<IPack>(
     {
-        id: { type: String, required: true },
-        userId: { type: String, required: true },
+        id: { type: String},
+        userId: { type: Schema.Types.ObjectId, ref:"User", required: true },
         title: { type: String, required: true },
         producer: { type: String, required: true },
         thumbnail_image: { type: String, required: true },
@@ -17,7 +17,8 @@ const packSchema = new Schema<IPack>(
         date: { type: String, required: true },
         waveform: { type: String, required: true },
         bpm: { type: Number, required: true },
-        key: { type: String, required: true }
+        key: { type: String, required: true },
+        highlight: { type: Boolean, default: false },
     },
     {
         timestamps: true,

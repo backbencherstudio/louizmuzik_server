@@ -3,7 +3,7 @@ import { TdailyMelodyDownloadStats, Tmelody } from "./melody.interface";
 
 const MelodySchema = new Schema<Tmelody>(
   {
-    userId: { type: String, ref: 'User', required: [true, 'User ID is required'] },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: [true, 'User ID is required'] },
     name: { type: String, required: [true, 'name is required'] },
     image: { type: String, required: [true, 'Image URL is required'] },
     audioUrl: { type: String, required: [true, 'Audio URL is required'] },
