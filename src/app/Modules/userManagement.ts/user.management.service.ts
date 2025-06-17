@@ -37,6 +37,7 @@ const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => 
     return result
 }
 
+
 const changePasswordIntoDB = async (userId: string, paylod: any) => {
     const userData = await User.findById({ _id: userId })
     if (!userData) {
@@ -49,6 +50,7 @@ const changePasswordIntoDB = async (userId: string, paylod: any) => {
     const hashedPassword = await bcrypt.hash(paylod?.new_password, 8);
     await User.findOneAndUpdate({ _id: userId }, { password: hashedPassword }, { new: true, runValidators: true })
 }
+
 
 const followingProducersCalculation = async (currentUserId: string, producerUserId: string) => {
   const currentUserObjectId = new mongoose.Types.ObjectId(currentUserId);
