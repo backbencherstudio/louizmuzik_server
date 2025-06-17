@@ -54,11 +54,33 @@ const allProducersDataWithTopProducersData = catchAsync(async (req, res) => {
   });
 });
 
+const followingUsersAllMelodyAndPack = catchAsync(async (req, res) => {
+  const result = await UserManagement.followingUsersAllMelodyAndPack(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'get following producers all melody and packs.',
+    data: result,
+  });
+});
+
+const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = catchAsync(async (req, res) => {
+  const result = await UserManagement.singleUserInfoAndThisUserAllMelodyAndPacksForProfile(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'get all melody and packs and usr data for profile view.',
+    data: result,
+  });
+});
+
 
 
 export const UserManagementController = {
   updateUserData,
   changePassword,
   followingProducersCalculation,
-  allProducersDataWithTopProducersData
+  allProducersDataWithTopProducersData,
+  followingUsersAllMelodyAndPack,
+  singleUserInfoAndThisUserAllMelodyAndPacksForProfile
 }

@@ -25,6 +25,16 @@ router.patch(
   UserManagementController.followingProducersCalculation,
 );
 
+router.get(
+  '/:userId',  // current user id  (for Feed page)
+  UserManagementController.followingUsersAllMelodyAndPack,
+);
+
+router.get(
+  '/profile/:userId',  // current user id  (for profile)
+  UserManagementController.singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
+);
+
 
 
 

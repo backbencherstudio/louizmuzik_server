@@ -9,6 +9,8 @@ import { User } from "../User/user.model";
 import { AppError } from '../../errors/AppErrors';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
+import { Melody } from '../Melody/melody.module';
+import { Pack } from '../Pack/pack.module';
 
 const getAbsoluteFilePath = async (dbPath: string) => {
     try {
@@ -113,7 +115,56 @@ return { top5Producers, allProducers }
 
 //======= following usrs all melody and pack
 
+const followingUsersAllMelodyAndPack = async (userId: string) => {
+  const currentUser = await User.findById(userId);
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
 
+  const followingIdArray = currentUser.following;
+
+  if (!followingIdArray || followingIdArray.length === 0) {
+    return {
+      melodies: [],
+      packs: []
+    };
+  }
+
+  const melodies = await Melody.find({
+    userId: { $in: followingIdArray }
+  }).populate('userId', 'profile_image producer_name email');
+
+  const packs = await Pack.find({
+    userId: { $in: followingIdArray }
+  }).populate('userId', 'profile_image producer_name email');
+
+  return {
+    melodies,
+    packs
+  };
+};
+
+
+const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = async (userId : string)=>{
+  const currentUser = await User.findById(userId);
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+
+  const melodies = await Melody.find({
+    userId: { $in: currentUser?._id }
+  }).populate('userId', 'profile_image producer_name email');
+
+  const packs = await Pack.find({
+    userId: { $in: currentUser?._id }
+  }).populate('userId', 'profile_image producer_name email');
+
+  return {
+    userData : currentUser,
+    melodies,
+    packs
+  };
+}
 
 
 
@@ -121,5 +172,7 @@ export const UserManagement = {
     updateUserDataIntoDB,
     changePasswordIntoDB,
     followingProducersCalculation,
-    allProducersDataWithTopProducersData
+    allProducersDataWithTopProducersData,
+    followingUsersAllMelodyAndPack,
+    singleUserInfoAndThisUserAllMelodyAndPacksForProfile
 }
