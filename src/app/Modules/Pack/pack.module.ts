@@ -18,6 +18,7 @@ const packSchema = new Schema<IPack>(
         waveform: { type: String, required: true },
         bpm: { type: Number, required: true },
         key: { type: String, required: true },
+        favorites: { type: Number, default: 0 },
         highlight: { type: Boolean, default: false },
     },
     {

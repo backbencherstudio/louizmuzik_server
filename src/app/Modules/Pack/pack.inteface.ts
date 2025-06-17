@@ -16,5 +16,6 @@ export interface IPack {
   waveform: string;
   bpm: number;
   key: string;
+  favorites: number;
   highlight : boolean  // this is for marketplace page hero section
 }
