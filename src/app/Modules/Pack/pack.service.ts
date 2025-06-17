@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose";
 import { IPack } from "./pack.inteface";
 import { Pack } from "./pack.module";
 import { User } from "../User/user.model";
+import { AppError } from "../../errors/AppErrors";
+import httpStatus from "http-status";
 
 
 const getAllPackFromDB = async () => {
@@ -22,55 +25,70 @@ const getSingleUserAllPackFromDB = async (userId: string) => {
 
 
 const selectFavoritePack = async (packId: string, userId: string) => {
-  const packObjectId = new mongoose.Types.ObjectId(packId);
-  const userObjectId = new mongoose.Types.ObjectId(userId);
+    const packObjectId = new mongoose.Types.ObjectId(packId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  const user = await User.findById(userObjectId);
-  if (!user) {
-    throw new Error("User not found");
-  }
+    const user = await User.findById(userObjectId);
+    if (!user) {
+        throw new Error("User not found");
+    }
 
-  const isAlreadyFavorited = user.favourite_packs?.some(
-    (id) => id.toString() === packId
-  );
-
-  if (isAlreadyFavorited) {
-    // Remove from favorites
-    await User.findByIdAndUpdate(
-      userObjectId,
-      { $pull: { favourite_packs: packObjectId } },
-      { new: true, runValidators: true }
+    const isAlreadyFavorited = user.favourite_packs?.some(
+        (id) => id.toString() === packId
     );
 
-    await Pack.findByIdAndUpdate(
-      packObjectId,
-      { $inc: { favorites: -1 } },
-      { new: true, runValidators: true }
-    );
+    if (isAlreadyFavorited) {
+        // Remove from favorites
+        await User.findByIdAndUpdate(
+            userObjectId,
+            { $pull: { favourite_packs: packObjectId } },
+            { new: true, runValidators: true }
+        );
 
-    return { message: "Pack removed from favourites" };
-  } else {
-    // Add to favorites
-    await User.findByIdAndUpdate(
-      userObjectId,
-      { $addToSet: { favourite_packs: packObjectId } },
-      { new: true, runValidators: true }
-    );
+        await Pack.findByIdAndUpdate(
+            packObjectId,
+            { $inc: { favorites: -1 } },
+            { new: true, runValidators: true }
+        );
 
-    await Pack.findByIdAndUpdate(
-      packObjectId,
-      { $inc: { favorites: 1 } },
-      { new: true, runValidators: true }
-    );
+        return { message: "Pack removed from favourites" };
+    } else {
+        // Add to favorites
+        await User.findByIdAndUpdate(
+            userObjectId,
+            { $addToSet: { favourite_packs: packObjectId } },
+            { new: true, runValidators: true }
+        );
 
-    return { message: "Pack added to favourites" };
-  }
+        await Pack.findByIdAndUpdate(
+            packObjectId,
+            { $inc: { favorites: 1 } },
+            { new: true, runValidators: true }
+        );
+
+        return { message: "Pack added to favourites" };
+    }
 };
 
-//=== ekhon single pack er data show kora api hobe, + ukto pack er user er joto pac ache ta sob show hobw 
+//=== this api for single pack page
+const getSinglePackAndAllPackEachUser = async (packId: string) => {
+    const singlePackData = await Pack.findById({ _id: packId }).populate("userId").populate('userId', 'profile_image producer_name role email country');;
+    
+    if (!singlePackData) throw new AppError(httpStatus.NOT_FOUND, "pack data not found")
 
-const deleteSinglePackByUser = async(packId : string)=>{
-    const result = await Pack.findByIdAndDelete({_id : packId})
+    const userIdStr = (singlePackData.userId as any)._id.toString();
+    const eachUserAllPack = await Pack.find({ userId: userIdStr })
+        .populate('userId', 'profile_image producer_name role email country');
+        
+    return {
+        singlePackData,
+        eachUserAllPack
+    }
+}
+
+
+const deleteSinglePackByUser = async (packId: string) => {
+    const result = await Pack.findByIdAndDelete({ _id: packId })
     return result
 }
 
@@ -80,5 +98,6 @@ export const packService = {
     getAllPackFromDB,
     getSingleUserAllPackFromDB,
     selectFavoritePack,
+    getSinglePackAndAllPackEachUser,
     deleteSinglePackByUser
 }

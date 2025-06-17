@@ -14,6 +14,11 @@ router.patch(   //============== add favourite and remove facourite pack
   packController.selectFavoritePack
 );
 
+router.get(   //============== //=== this api for single pack page
+  '/single-pack/:packId',
+  packController.getSinglePackAndAllPackEachUser
+);
+
 
 router.delete('/:packId', packController.deleteSinglePackByUser)
 

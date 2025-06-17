@@ -34,6 +34,7 @@ const getSingleUserAllPackFromDB = catchAsync(async (req, res) => {
     });
 });
 
+
 const selectFavoritePack = catchAsync(async (req, res) => {
     const packId = req.params.packId
     const userId = req.query.userId
@@ -46,6 +47,18 @@ const selectFavoritePack = catchAsync(async (req, res) => {
         data: true,
     });
 });
+
+
+const getSinglePackAndAllPackEachUser = catchAsync(async (req, res) => {
+    const result = await packService.getSinglePackAndAllPackEachUser(req.params.packId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'get single pack data and each user all Pack data',
+        data: result,
+    });
+});
+
 
 const deleteSinglePackByUser = catchAsync(async (req, res) => {
     const result = await packService.deleteSinglePackByUser(req.params.packId);
@@ -63,5 +76,6 @@ export const packController = {
     createPackIntoDB,
     getSingleUserAllPackFromDB,
     selectFavoritePack,
+    getSinglePackAndAllPackEachUser,
     deleteSinglePackByUser
 }
