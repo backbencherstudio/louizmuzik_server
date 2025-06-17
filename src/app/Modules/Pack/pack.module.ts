@@ -1,0 +1,28 @@
+import { model, Schema } from "mongoose";
+import { IPack } from "./pack.inteface";
+
+const packSchema = new Schema<IPack>(
+    {
+        id: { type: String, required: true },
+        userId: { type: String, required: true },
+        title: { type: String, required: true },
+        producer: { type: String, required: true },
+        thumbnail_image: { type: String, required: true },
+        audio_path: { type: String, default: '' },
+        video_path: { type: String, default: '' },
+        zip_path: { type: String, default: '' },
+        price: { type: Number, required: true },
+        description: { type: String, default: '' },
+        genre: { type: [String], required: true },
+        date: { type: String, required: true },
+        waveform: { type: String, required: true },
+        bpm: { type: Number, required: true },
+        key: { type: String, required: true }
+    },
+    {
+        timestamps: true,
+        versionKey: false
+    }
+);
+
+export const Pack = model<IPack>('Pack', packSchema);

@@ -33,8 +33,10 @@ const dailyMelodyDownloadStats = new Schema<TdailyMelodyDownloadStats>({
     enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     required: true,
   },
-}, { timestamps: true,
-    versionKey: false });
+}, {
+  timestamps: true,
+  versionKey: false
+});
 
 export const DailyMelodyDownloadStats = model('DailyMelodyDownloadStats', dailyMelodyDownloadStats);
 
