@@ -31,7 +31,7 @@ router.get(
 );
 
 router.get(
-  '/profile/:userId',  // current user id  (for profile)
+  '/profile/:userId',  // current user id  (for profile) == this api both of profile and your items page
   UserManagementController.singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
 );
 
