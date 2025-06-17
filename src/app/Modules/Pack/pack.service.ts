@@ -67,7 +67,7 @@ const selectFavoritePack = async (packId: string, userId: string) => {
   }
 };
 
-
+//=== ekhon single pack er data show kora api hobe, + ukto pack er user er joto pac ache ta sob show hobw 
 
 const deleteSinglePackByUser = async(packId : string)=>{
     const result = await Pack.findByIdAndDelete({_id : packId})
