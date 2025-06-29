@@ -23,7 +23,18 @@ const changeUsersSubscriptionStatus = catchAsync(async (req, res) => {
   });
 });
 
+const deleteUser = catchAsync(async (req, res) => {
+  const result = await adminService.deleteUser(req.params.selectedUser_Id); // selected user _id
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result ,
+    data: true,
+  });
+});
+
 export const adminUserController = {
     getAllUsrDataByAdminFromDB,
-    changeUsersSubscriptionStatus
+    changeUsersSubscriptionStatus,
+    deleteUser
 }

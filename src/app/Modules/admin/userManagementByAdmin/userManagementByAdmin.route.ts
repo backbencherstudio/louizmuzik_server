@@ -14,6 +14,11 @@ router.patch(
   adminUserController.changeUsersSubscriptionStatus,
 );
 
+router.delete(
+  '/:selectedUser_Id',
+  adminUserController.deleteUser,
+);
+
 
 
 
