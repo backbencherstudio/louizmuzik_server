@@ -13,6 +13,17 @@ const getAllUsrDataByAdminFromDB = catchAsync(async (req, res) => {
   });
 });
 
+const changeUsersSubscriptionStatus = catchAsync(async (req, res) => {
+  const result = await adminService.changeUsersSubscriptionStatus(req.params.selectedUser_Id); // selected user _id
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'change the subscription status successfully',
+    data: result,
+  });
+});
+
 export const adminUserController = {
-    getAllUsrDataByAdminFromDB
+    getAllUsrDataByAdminFromDB,
+    changeUsersSubscriptionStatus
 }

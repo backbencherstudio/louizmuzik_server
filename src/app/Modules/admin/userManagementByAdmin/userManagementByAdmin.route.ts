@@ -9,6 +9,13 @@ router.get(
   adminUserController.getAllUsrDataByAdminFromDB,
 );
 
+router.patch(
+  '/:selectedUser_Id',
+  adminUserController.changeUsersSubscriptionStatus,
+);
+
+
+
 
 
 export const UserManagementRouterForAdmin = router;
