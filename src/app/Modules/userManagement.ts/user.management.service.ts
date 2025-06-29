@@ -13,44 +13,44 @@ import { Melody } from '../Melody/melody.module';
 import { Pack } from '../Pack/pack.module';
 
 const getAbsoluteFilePath = async (dbPath: string) => {
-    try {
-        const relativePath = dbPath
-            .replace(/^\//, '')
-            .replace(/^uploads\//, '');
-        const uploadsDir = path.join(__dirname, '..', '..', '..', '..', '/uploads');
-        return path.join(uploadsDir, relativePath);
-    } catch (error) {
-        console.error('Error constructing file path:', error);
-        return null;
-    }
+  try {
+    const relativePath = dbPath
+      .replace(/^\//, '')
+      .replace(/^uploads\//, '');
+    const uploadsDir = path.join(__dirname, '..', '..', '..', '..', '/uploads');
+    return path.join(uploadsDir, relativePath);
+  } catch (error) {
+    console.error('Error constructing file path:', error);
+    return null;
+  }
 };
 
 
 const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => {
-    const isExistsUserData = await User.findById({ _id: userId }).select("profile_image")
-    if (isExistsUserData?.profile_image && payload?.profile_image !== undefined) {
-        const absoluteFilePath = await getAbsoluteFilePath(isExistsUserData.profile_image);
-        if (absoluteFilePath) {
-            await deleteFile(absoluteFilePath);
-        }
+  const isExistsUserData = await User.findById({ _id: userId }).select("profile_image")
+  if (isExistsUserData?.profile_image && payload?.profile_image !== undefined) {
+    const absoluteFilePath = await getAbsoluteFilePath(isExistsUserData.profile_image);
+    if (absoluteFilePath) {
+      await deleteFile(absoluteFilePath);
     }
-    const updatedPayload = await filteredObject(payload);
-    const result = await User.findByIdAndUpdate({ _id: userId }, updatedPayload, { new: true, runValidators: true })
-    return result
+  }
+  const updatedPayload = await filteredObject(payload);
+  const result = await User.findByIdAndUpdate({ _id: userId }, updatedPayload, { new: true, runValidators: true })
+  return result
 }
 
 
 const changePasswordIntoDB = async (userId: string, paylod: any) => {
-    const userData = await User.findById({ _id: userId })
-    if (!userData) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-    }
-    const res = await bcrypt.compare(paylod.old_password, userData?.password)
-    if (!res) {
-        throw new AppError(httpStatus.FORBIDDEN, 'The current password you entered does not match our records');
-    }
-    const hashedPassword = await bcrypt.hash(paylod?.new_password, 8);
-    await User.findOneAndUpdate({ _id: userId }, { password: hashedPassword }, { new: true, runValidators: true })
+  const userData = await User.findById({ _id: userId })
+  if (!userData) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  const res = await bcrypt.compare(paylod.old_password, userData?.password)
+  if (!res) {
+    throw new AppError(httpStatus.FORBIDDEN, 'The current password you entered does not match our records');
+  }
+  const hashedPassword = await bcrypt.hash(paylod?.new_password, 8);
+  await User.findOneAndUpdate({ _id: userId }, { password: hashedPassword }, { new: true, runValidators: true })
 }
 
 
@@ -99,17 +99,17 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
 };
 
 
-const allProducersDataWithTopProducersData = async () =>{
-const top5Producers = await User.find({ role: "user", isDeleted: false })
-  .sort({ followersCounter: -1 })
-  .limit(5);
+const allProducersDataWithTopProducersData = async () => {
+  const top5Producers = await User.find({ role: "user", isDeleted: false })
+    .sort({ followersCounter: -1 })
+    .limit(5);
 
-const allProducers = await User.find({
-  isDeleted: false,
-  role : "user"
-});
+  const allProducers = await User.find({
+    isDeleted: false,
+    role: "user"
+  });
 
-return { top5Producers, allProducers }
+  return { top5Producers, allProducers }
 }
 
 
@@ -145,7 +145,7 @@ const followingUsersAllMelodyAndPack = async (userId: string) => {
 };
 
 
-const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = async (userId : string)=>{
+const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = async (userId: string) => {
   const currentUser = await User.findById(userId);
   if (!currentUser) {
     throw new Error("User not found");
@@ -160,21 +160,37 @@ const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = async (userId : str
   }).populate('userId', 'profile_image producer_name email');
 
   return {
-    userData : currentUser,
+    userData: currentUser,
     melodies,
     packs
   };
 }
 
 //==================== favourite melody and favourite pack for favorites page
+const favoritesMelodyAndFavouritePackForEachUser = async (currentUserId: string) => {
+  const userData = await User.findById(currentUserId);
+  if (!userData) throw new AppError(httpStatus.NOT_FOUND, 'User not found');
 
+  const favouriteMelodiesIds = userData.favourite_melodies || [];
+  const favouritePacksIds = userData.favourite_packs || [];
+  const [melodies, packs] = await Promise.all([
+    Melody.find({ _id: { $in: favouriteMelodiesIds } }),
+    Pack.find({ _id: { $in: favouritePacksIds } })
+  ]);
+
+  return {
+    melodies,
+    packs
+  };
+};
 
 
 export const UserManagement = {
-    updateUserDataIntoDB,
-    changePasswordIntoDB,
-    followingProducersCalculation,
-    allProducersDataWithTopProducersData,
-    followingUsersAllMelodyAndPack,
-    singleUserInfoAndThisUserAllMelodyAndPacksForProfile
+  updateUserDataIntoDB,
+  changePasswordIntoDB,
+  followingProducersCalculation,
+  allProducersDataWithTopProducersData,
+  followingUsersAllMelodyAndPack,
+  singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
+  favoritesMelodyAndFavouritePackForEachUser
 }

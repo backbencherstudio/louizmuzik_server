@@ -35,6 +35,11 @@ router.get(
   UserManagementController.singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
 );
 
+router.get(
+  '/favorites/:userId',  // for favorite page ( current user id )
+  UserManagementController.favoritesMelodyAndFavouritePackForEachUser,
+);
+
 
 
 

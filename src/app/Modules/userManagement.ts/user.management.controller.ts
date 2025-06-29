@@ -75,6 +75,16 @@ const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = catchAsync(async (r
   });
 });
 
+const favoritesMelodyAndFavouritePackForEachUser = catchAsync(async (req, res) => {
+  const result = await UserManagement.favoritesMelodyAndFavouritePackForEachUser(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'get all favorite pack and melody for each user, for favorites page.',
+    data: result,
+  });
+});
+
 
 
 export const UserManagementController = {
@@ -83,5 +93,6 @@ export const UserManagementController = {
   followingProducersCalculation,
   allProducersDataWithTopProducersData,
   followingUsersAllMelodyAndPack,
-  singleUserInfoAndThisUserAllMelodyAndPacksForProfile
+  singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
+  favoritesMelodyAndFavouritePackForEachUser
 }
