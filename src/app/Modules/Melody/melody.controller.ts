@@ -3,6 +3,30 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { melodyService } from "./melody.service";
+import AWS from "aws-sdk";
+import busboy from "busboy";
+
+// const region = process.env.REGION!;
+// const accessKeyId = process.env.ACCESS_KEY!;
+// const secretAccessKey = process.env.ACCESS_SECRET_key!;
+const bucketName = process.env.BUCKET_NAME!;
+
+// const s3 = new AWS.S3({
+//     region,
+//     accessKeyId,
+//     secretAccessKey,
+// });
+
+const s3 = new AWS.S3({
+    region: process.env.REGION!,
+    accessKeyId: process.env.ACCESS_KEY!,
+    secretAccessKey: process.env.ACCESS_SECRET_key!,
+    httpOptions: {
+        timeout: 60 * 60 * 1000, // 1 hour timeout for large file uploads
+    },
+    maxRetries: 3,
+});
+
 
 const getAllMelodyes = catchAsync(async (req, res) => {
     const result = await melodyService.getAllMelodyes();
@@ -15,25 +39,81 @@ const getAllMelodyes = catchAsync(async (req, res) => {
 });
 
 const melodyCreateByProducer = catchAsync(async (req, res) => {
+    const bb = busboy({ headers: req.headers });
+    const fields: any = {};
+    let uploadPromise: Promise<AWS.S3.ManagedUpload.SendData> | null = null;
+    bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
+        // If filename is an object, get the real filename property
+        let realFilename = filename;
 
-    const imageUrl = (req.file as any)?.location; // multer-s3 puts the full S3 URL in `location`
+        if (filename && typeof filename === "object" && "filename" in filename) {
+            realFilename = (filename as any).filename;
+        }
 
-    const payload = {
-        ...req.body,
-        image: imageUrl,
-    };
+        const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
 
-    const result = await melodyService.melodyCreateByProducer(payload);
+        const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
 
+        const uploadParams = {
+            Bucket: bucketName,
+            Key: key,
+            Body: file,
+            ContentType: mimetype,
+        };
 
-    // const result = await melodyService.melodyCreateByProducer(req.body);
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'melody created successfully',
-        data: result,
+        uploadPromise = s3.upload(uploadParams).promise();
     });
+    bb.on("field", (fieldname, val) => {
+        fields[fieldname] = val;
+    });
+    bb.on("error", (err) => {
+        console.error("Busboy error:", err);
+        res.status(500).send({ message: "File upload failed" });
+    });
+    bb.on("finish", async () => {
+        if (!uploadPromise) {
+            return res.status(400).send({ message: "No file uploaded" });
+        }
+        try {
+            const data = await uploadPromise;
+            const payload = {
+                ...fields,
+                image: data.Location,
+            };
+            const result = await melodyService.melodyCreateByProducer(payload);
+
+            sendResponse(res, {
+                statusCode: httpStatus.OK,
+                success: true,
+                message: "Melody uploaded successfully",
+                data: result,
+            });
+        } catch (error) {
+            console.error("S3 upload error:", error);
+            res.status(500).send({ message: "Upload failed", error });
+        }
+    });
+
+    req.pipe(bb);
 });
+
+
+// const melodyCreateByProducer = catchAsync(async (req, res) => {
+//     const imageUrl = (req.file as any)?.location; // multer-s3 puts the full S3 URL in `location`
+//     const payload = {
+//         ...req.body,
+//         image: imageUrl,
+//     };
+//     const result = await melodyService.melodyCreateByProducer(payload);
+//     // const result = await melodyService.melodyCreateByProducer(req.body);
+//     sendResponse(res, {
+//         statusCode: httpStatus.OK,
+//         success: true,
+//         message: 'melody created successfully',
+//         data: result,
+//     });
+// });
+
 
 const getAllMelodesEachProducer = catchAsync(async (req, res) => {
     const result = await melodyService.getAllMelodesEachProducer(req.params.userId);

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose"
 import { User } from "../User/user.model"
-import { Tmelody } from "./melody.interface"
+// import { Tmelody } from "./melody.interface"
 import { DailyMelodyDownloadStats, Melody } from "./melody.module"
 import dayjs from 'dayjs';
 
@@ -9,7 +10,7 @@ const getAllMelodyes = async () => {
   return result
 }
 
-const melodyCreateByProducer = async (payload: Tmelody) => {
+const melodyCreateByProducer = async (payload: any) => {
   const result = await Melody.create(payload)
 
   if (result) {
