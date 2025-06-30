@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
@@ -14,7 +15,18 @@ const getAllMelodyes = catchAsync(async (req, res) => {
 });
 
 const melodyCreateByProducer = catchAsync(async (req, res) => {
-    const result = await melodyService.melodyCreateByProducer(req.body);
+
+    const imageUrl = (req.file as any)?.location; // multer-s3 puts the full S3 URL in `location`
+
+    const payload = {
+        ...req.body,
+        image: imageUrl,
+    };
+
+    const result = await melodyService.melodyCreateByProducer(payload);
+
+
+    // const result = await melodyService.melodyCreateByProducer(req.body);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
@@ -34,7 +46,7 @@ const getAllMelodesEachProducer = catchAsync(async (req, res) => {
 });
 
 const deleteMelodesEachProducer = catchAsync(async (req, res) => {
-    const result = await melodyService.deleteMelodesEachProducer(req.params.melodyId, req.query.userId as string );
+    const result = await melodyService.deleteMelodesEachProducer(req.params.melodyId, req.query.userId as string);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,

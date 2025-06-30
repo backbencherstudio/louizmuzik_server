@@ -1,5 +1,6 @@
 import express from 'express';
 import { melodyController } from './melody.controller';
+import upload from '../../middleware/uploads';
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ router.get(
 
 router.post(
   '/create-melody',
+  upload.single("image"),
   melodyController.melodyCreateByProducer
 );
 
