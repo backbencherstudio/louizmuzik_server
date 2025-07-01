@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose"
 import { User } from "../User/user.model"
-// import { Tmelody } from "./melody.interface"
+import { Tmelody } from "./melody.interface"
 import { DailyMelodyDownloadStats, Melody } from "./melody.module"
 import dayjs from 'dayjs';
 
@@ -10,7 +10,7 @@ const getAllMelodyes = async () => {
   return result
 }
 
-const melodyCreateByProducer = async (payload: any) => {
+const melodyCreateByProducer = async (payload: Tmelody) => {
   const result = await Melody.create(payload)
 
   if (result) {
@@ -20,7 +20,11 @@ const melodyCreateByProducer = async (payload: any) => {
       { new: true, runValidators: true }
     )
   }
+  return result
+}
 
+const melodyUpdateByProducer = async(melodyId : string, payload : Partial<Tmelody> )=>{
+  const result = await Melody.findByIdAndUpdate({_id : melodyId}, payload, {runValidators : true, new : true} )  
   return result
 }
 
@@ -121,6 +125,7 @@ const melodyPlay = async (id: string) => {
 export const melodyService = {
   getAllMelodyes,
   melodyCreateByProducer,
+  melodyUpdateByProducer,
   getAllMelodesEachProducer,
   deleteMelodesEachProducer,
   selectFavoriteMelody,

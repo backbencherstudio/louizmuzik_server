@@ -18,6 +18,8 @@ router.get(
 
 router.post("/create-melody", melodyController.melodyCreateByProducer);
 
+router.patch("/update-melody/:melodyId", melodyController.melodyUpdateByProducer);
+
 // router.post("/create-melody", melodyController.melodyCreateByProducer);
 
 
