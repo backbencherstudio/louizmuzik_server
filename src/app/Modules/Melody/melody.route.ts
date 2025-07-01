@@ -18,6 +18,9 @@ router.get(
 
 router.post("/create-melody", melodyController.melodyCreateByProducer);
 
+// router.post("/create-melody", melodyController.melodyCreateByProducer);
+
+
 router.get(
   '/:userId',
   melodyController.getAllMelodesEachProducer

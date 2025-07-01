@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
@@ -38,30 +39,36 @@ const getAllMelodyes = catchAsync(async (req, res) => {
     });
 });
 
+
 const melodyCreateByProducer = catchAsync(async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields: any = {};
-    let uploadPromise: Promise<AWS.S3.ManagedUpload.SendData> | null = null;
-    bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
-        // If filename is an object, get the real filename property
-        let realFilename = filename;
+    let uploadPromises: Promise<AWS.S3.ManagedUpload.SendData>[] = [];
+    let imageUrl: string | null = null;
+    let audioUrl: string | null = null;
 
+    bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
+        let realFilename = filename;
         if (filename && typeof filename === "object" && "filename" in filename) {
             realFilename = (filename as any).filename;
         }
-
         const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
-
-        const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
-
+        const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;        
         const uploadParams = {
             Bucket: bucketName,
             Key: key,
             Body: file,
             ContentType: mimetype,
         };
-
-        uploadPromise = s3.upload(uploadParams).promise();
+        const uploadPromise = s3.upload(uploadParams).promise();
+        uploadPromise.then(data => {
+            if (fieldname === 'image') {
+                imageUrl = data.Location;
+            } else if (fieldname === 'audioUrl') {
+                audioUrl = data.Location;
+            }
+        });
+        uploadPromises.push(uploadPromise);
     });
     bb.on("field", (fieldname, val) => {
         fields[fieldname] = val;
@@ -70,18 +77,19 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
         console.error("Busboy error:", err);
         res.status(500).send({ message: "File upload failed" });
     });
+
     bb.on("finish", async () => {
-        if (!uploadPromise) {
-            return res.status(400).send({ message: "No file uploaded" });
-        }
         try {
-            const data = await uploadPromise;
+            await Promise.all(uploadPromises);
+            if (!imageUrl || !audioUrl) {
+                return res.status(400).send({ message: "Both image and audio files must be uploaded" });
+            }
             const payload = {
                 ...fields,
-                image: data.Location,
+                image : imageUrl,
+                audioUrl,
             };
             const result = await melodyService.melodyCreateByProducer(payload);
-
             sendResponse(res, {
                 statusCode: httpStatus.OK,
                 success: true,
@@ -96,6 +104,149 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
 
     req.pipe(bb);
 });
+
+
+
+// const melodyCreateByProducer = catchAsync(async (req, res) => {
+//     console.log("hiiittt");
+    
+//     const bb = busboy({ headers: req.headers });
+//     const fields: any = {};
+//     let uploadPromises: Promise<AWS.S3.ManagedUpload.SendData>[] = [];
+//     let imageUrl: string | null = null;
+//     let audioUrl: string | null = null;
+
+//     bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
+//         let realFilename = filename;
+//         if (filename && typeof filename === "object" && "filename" in filename) {
+//             realFilename = (filename as any).filename;
+//         }
+
+//         const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
+//         const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
+        
+//         const uploadParams = {
+//             Bucket: bucketName,
+//             Key: key,
+//             Body: file,
+//             ContentType: mimetype,
+//         };
+
+//         const uploadPromise = s3.upload(uploadParams).promise();
+
+//         // Determine which file is image and which one is audio
+//         if (fieldname === 'image') {
+//             uploadPromise.then(data => imageUrl = data.Location);
+//         } else if (fieldname === 'audio') {
+//             uploadPromise.then(data => audioUrl = data.Location);
+//         }
+
+//         uploadPromises.push(uploadPromise);
+//     });
+
+//     bb.on("field", (fieldname, val) => {
+//         fields[fieldname] = val;
+//     });
+
+//     bb.on("error", (err) => {
+//         console.error("Busboy error:", err);
+//         res.status(500).send({ message: "File upload failed" });
+//     });
+
+//     bb.on("finish", async () => {
+//         if (uploadPromises.length === 0 || !imageUrl || !audioUrl) {
+//             return res.status(400).send({ message: "Both image and audio files must be uploaded" });
+//         }
+//         try {
+//             // Wait for both uploads to finish
+//             await Promise.all(uploadPromises);
+
+//              console.log("hiiittt 222 ");
+
+//             const payload = {
+//                 ...fields,
+//                 imageUrl,  // Store the image URL
+//                 audioUrl,  // Store the audio URL
+//             };
+
+//             const result = await melodyService.melodyCreateByProducer(payload);
+
+//              console.log("hiiittt 333");
+
+//             sendResponse(res, {
+//                 statusCode: httpStatus.OK,
+//                 success: true,
+//                 message: "Melody uploaded successfully",
+//                 data: result,
+//             });
+//         } catch (error) {
+//             console.error("S3 upload error:", error);
+//             res.status(500).send({ message: "Upload failed", error });
+//         }
+//     });
+
+//     req.pipe(bb);
+// });
+// ========
+
+
+
+
+
+// const melodyCreateByProducer = catchAsync(async (req, res) => {
+//     const bb = busboy({ headers: req.headers });
+//     const fields: any = {};
+//     let uploadPromise: Promise<AWS.S3.ManagedUpload.SendData> | null = null;
+//     bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
+//         let realFilename = filename;
+//         if (filename && typeof filename === "object" && "filename" in filename) {
+//             realFilename = (filename as any).filename;
+//         }
+//         const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
+//         const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
+
+//         const uploadParams = {
+//             Bucket: bucketName,
+//             Key: key,
+//             Body: file,
+//             ContentType: mimetype,
+//         };
+
+//         uploadPromise = s3.upload(uploadParams).promise();
+//     });
+//     bb.on("field", (fieldname, val) => {
+//         fields[fieldname] = val;
+//     });
+//     bb.on("error", (err) => {
+//         console.error("Busboy error:", err);
+//         res.status(500).send({ message: "File upload failed" });
+//     });
+//     bb.on("finish", async () => {
+//         if (!uploadPromise) {
+//             return res.status(400).send({ message: "No file uploaded" });
+//         }
+//         try {
+//             const data = await uploadPromise;
+//             const payload = {
+//                 ...fields,
+//                 image: data.Location,
+//             };
+//             const result = await melodyService.melodyCreateByProducer(payload);
+
+//             sendResponse(res, {
+//                 statusCode: httpStatus.OK,
+//                 success: true,
+//                 message: "Melody uploaded successfully",
+//                 data: result,
+//             });
+//         } catch (error) {
+//             console.error("S3 upload error:", error);
+//             res.status(500).send({ message: "Upload failed", error });
+//         }
+//     });
+
+//     req.pipe(bb);
+// });
 
 
 // const melodyCreateByProducer = catchAsync(async (req, res) => {

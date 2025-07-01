@@ -23,7 +23,6 @@ const MelodySchema = new Schema<Tmelody>(
     versionKey: false
   }
 )
-
 const dailyMelodyDownloadStats = new Schema<TdailyMelodyDownloadStats>({
   producerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true },
