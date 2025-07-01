@@ -33,6 +33,71 @@ const getAllMelodyes = catchAsync(async (req, res) => {
 });
 
 
+// const melodyCreateByProducer = catchAsync(async (req, res) => {
+//     const bb = busboy({ headers: req.headers });
+//     const fields: any = {};
+//     let uploadPromises: Promise<AWS.S3.ManagedUpload.SendData>[] = [];
+//     let imageUrl: string | null = null;
+//     let audioUrl: string | null = null;
+
+//     bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
+//         let realFilename = filename;
+//         if (filename && typeof filename === "object" && "filename" in filename) {
+//             realFilename = (filename as any).filename;
+//         }
+//         const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
+//         const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;        
+//         const uploadParams = {
+//             Bucket: bucketName,
+//             Key: key,
+//             Body: file,
+//             ContentType: mimetype,
+//         };
+//         const uploadPromise = s3.upload(uploadParams).promise();
+//         uploadPromise.then(data => {
+//             if (fieldname === 'image') {
+//                 imageUrl = data.Location;
+//             } else if (fieldname === 'audioUrl') {
+//                 audioUrl = data.Location;
+//             }
+//         });
+//         uploadPromises.push(uploadPromise);
+//     });
+//     bb.on("field", (fieldname, val) => {
+//         fields[fieldname] = val;
+//     });
+//     bb.on("error", (err) => {
+//         console.error("Busboy error:", err);
+//         res.status(500).send({ message: "File upload failed" });
+//     });
+
+//     bb.on("finish", async () => {
+//         try {
+//             await Promise.all(uploadPromises);
+//             if (!imageUrl || !audioUrl) {
+//                 return res.status(400).send({ message: "Both image and audio files must be uploaded" });
+//             }
+//             const payload = {
+//                 ...fields,
+//                 image : imageUrl,
+//                 audioUrl,
+//             };
+//             const result = await melodyService.melodyCreateByProducer(payload);
+//             sendResponse(res, {
+//                 statusCode: httpStatus.OK,
+//                 success: true,
+//                 message: "Melody uploaded successfully",
+//                 data: result,
+//             });
+//         } catch (error) {
+//             console.error("S3 upload error:", error);
+//             res.status(500).send({ message: "Upload failed", error });
+//         }
+//     });
+
+//     req.pipe(bb);
+// });
+
 const melodyCreateByProducer = catchAsync(async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields: any = {};
@@ -45,14 +110,23 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
         if (filename && typeof filename === "object" && "filename" in filename) {
             realFilename = (filename as any).filename;
         }
-        const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
-        const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;        
+
+        // Clean the filename by removing spaces and unnecessary characters
+        let cleanFilename = realFilename
+            .replace(/\s+/g, "_")  // Replace all spaces with underscores
+            .replace(/[^a-zA-Z0-9._-]/g, "")  // Remove unwanted characters (anything other than letters, numbers, underscores, periods, or hyphens)
+            .toLowerCase();  // Optionally, convert the filename to lowercase
+
+        // Ensure uniqueness by appending Date.now()
+        const key = `${Date.now()}-${cleanFilename}`;
+
         const uploadParams = {
             Bucket: bucketName,
             Key: key,
             Body: file,
             ContentType: mimetype,
         };
+
         const uploadPromise = s3.upload(uploadParams).promise();
         uploadPromise.then(data => {
             if (fieldname === 'image') {
@@ -63,9 +137,11 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
         });
         uploadPromises.push(uploadPromise);
     });
+
     bb.on("field", (fieldname, val) => {
         fields[fieldname] = val;
     });
+
     bb.on("error", (err) => {
         console.error("Busboy error:", err);
         res.status(500).send({ message: "File upload failed" });
@@ -79,7 +155,7 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
             }
             const payload = {
                 ...fields,
-                image : imageUrl,
+                image: imageUrl,
                 audioUrl,
             };
             const result = await melodyService.melodyCreateByProducer(payload);
@@ -97,6 +173,9 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
 
     req.pipe(bb);
 });
+
+
+
 
 
 const melodyUpdateByProducer = catchAsync(async (req, res) => {
@@ -134,8 +213,15 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
         if (filename && typeof filename === "object" && "filename" in filename) {
             realFilename = (filename as any).filename;
         }
-        const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
-        const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
+        // const safeFilename = typeof realFilename === "string" ? realFilename : "unknown-file";
+        // const key = `${Date.now()}-${safeFilename.replace(/\s/g, "_")}`;
+        let cleanFilename = realFilename
+            .replace(/\s+/g, "_")  // Replace all spaces with underscores
+            .replace(/[^a-zA-Z0-9._-]/g, "")  // Remove unwanted characters (anything other than letters, numbers, underscores, periods, or hyphens)
+            .toLowerCase();  // Optionally, convert the filename to lowercase
+
+        // Ensure uniqueness by appending Date.now()
+        const key = `${Date.now()}-${cleanFilename}`;
 
         const uploadParams = {
             Bucket: bucketName,
