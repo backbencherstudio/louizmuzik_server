@@ -242,7 +242,7 @@ const deleteSinglePackByUser = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        message: 'Deleted Pack successfully',
+        message: 'Pack Deleted successfully',
         data: result,
     });
 });
