@@ -26,6 +26,7 @@ const getAbsoluteFilePath = async (dbPath: string) => {
 };
 
 
+
 const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => {
   const isExistsUserData = await User.findById({ _id: userId }).select("profile_image")
   if (isExistsUserData?.profile_image && payload?.profile_image !== undefined) {
@@ -38,6 +39,7 @@ const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => 
   const result = await User.findByIdAndUpdate({ _id: userId }, updatedPayload, { new: true, runValidators: true })
   return result
 }
+
 
 
 const changePasswordIntoDB = async (userId: string, paylod: any) => {

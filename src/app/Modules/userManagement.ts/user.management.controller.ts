@@ -4,6 +4,8 @@ import { catchAsync } from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { UserManagement } from "./user.management.service";
 
+
+
 const updateUserData = catchAsync(async (req, res) => {
   const files = req.files as Express.Multer.File[];
   const profile_image = files?.map((file) => `/uploads/${file.filename}`)[0];
@@ -19,6 +21,7 @@ const updateUserData = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 
 
 const changePassword = catchAsync(async (req, res) => {
