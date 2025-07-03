@@ -105,6 +105,8 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
     let imageUrl: string | null = null;
     let audioUrl: string | null = null;
 
+    //  const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;  
+
     bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
         let realFilename = filename;
         if (filename && typeof filename === "object" && "filename" in filename) {
@@ -119,6 +121,11 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
 
         // Ensure uniqueness by appending Date.now()
         const key = `${Date.now()}-${cleanFilename}`;
+
+        // Check the file size before uploading
+        // if (file.truncated || file.bytesRead > MAX_FILE_SIZE) {
+        //     return res.status(400).send({ message: "File size exceeds the 5GB limit" });
+        // }
 
         const uploadParams = {
             Bucket: bucketName,

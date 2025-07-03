@@ -9,6 +9,8 @@ router.get('/:userId', packController.getSingleUserAllPackFromDB)
 
 router.post('/create-pack', packController.createPackIntoDB)
 
+router.patch('/update-pack/:packId', packController.updatePackIntoDB)
+
 router.patch(   //============== add favourite and remove facourite pack
   '/:packId',
   packController.selectFavoritePack

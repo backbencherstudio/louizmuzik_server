@@ -17,6 +17,11 @@ const createPackIntoDB = async (payload: IPack) => {
     return result
 }
 
+const updatePackIntoDB = async (packId : string , payload : Partial<IPack>)=>{
+    const result = await Pack.findByIdAndUpdate({_id : packId}, payload, {runValidators : true, new : true});
+    return result
+}
+
 const getSingleUserAllPackFromDB = async (userId: string) => {
     const result = await Pack.find({ userId });
     //   const result = await Pack.find({ userId }).populate('userId', 'profile_image producer_name role email country');
@@ -95,6 +100,7 @@ const deleteSinglePackByUser = async (packId: string) => {
 
 export const packService = {
     createPackIntoDB,
+    updatePackIntoDB,
     getAllPackFromDB,
     getSingleUserAllPackFromDB,
     selectFavoritePack,
