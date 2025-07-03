@@ -4,6 +4,19 @@ import { User } from "../User/user.model"
 import { Tmelody } from "./melody.interface"
 import { DailyMelodyDownloadStats, Melody } from "./melody.module"
 import dayjs from 'dayjs';
+import AWS from "aws-sdk";
+
+const bucketName = process.env.BUCKET_NAME!;
+
+const s3 = new AWS.S3({
+  region: process.env.REGION!,
+  accessKeyId: process.env.ACCESS_KEY!,
+  secretAccessKey: process.env.ACCESS_SECRET_key!,
+  httpOptions: {
+    timeout: 60 * 60 * 1000, // 1 hour timeout for large file uploads
+  },
+  maxRetries: 3,
+});
 
 const getAllMelodyes = async () => {
   const result = await Melody.find();
@@ -23,8 +36,8 @@ const melodyCreateByProducer = async (payload: Tmelody) => {
   return result
 }
 
-const melodyUpdateByProducer = async(melodyId : string, payload : Partial<Tmelody> )=>{
-  const result = await Melody.findByIdAndUpdate({_id : melodyId}, payload, {runValidators : true, new : true} )  
+const melodyUpdateByProducer = async (melodyId: string, payload: Partial<Tmelody>) => {
+  const result = await Melody.findByIdAndUpdate({ _id: melodyId }, payload, { runValidators: true, new: true })
   return result
 }
 
@@ -33,18 +46,74 @@ const getAllMelodesEachProducer = async (userId: string) => {
   return result
 }
 
-const deleteMelodesEachProducer = async (melodyId: string, userId: string) => {
-  const result = await Melody.deleteOne({ _id: melodyId })
 
-  if (result?.acknowledged && result?.deletedCount > 0) {
-    await User.findByIdAndUpdate(
-      { _id: userId },
-      { $inc: { melodiesCounter: -1 } },
-      { new: true, runValidators: true }
-    )
+// const deleteMelodesEachProducer = async (melodyId: string, userId: string) => {
+
+//   const meloayData = await Melody.findById({_id : melodyId}).select(["image", "audioUrl"]);
+
+//   console.log(41, meloayData);
+
+//   console.log(43, userId);
+
+
+//   // const result = await Melody.deleteOne({ _id: melodyId })
+
+//   // if (result?.acknowledged && result?.deletedCount > 0) {
+//   //   await User.findByIdAndUpdate(
+//   //     { _id: userId },
+//   //     { $inc: { melodiesCounter: -1 } },
+//   //     { new: true, runValidators: true }
+//   //   )
+//   // }
+
+//   return true
+// }
+
+
+const deleteMelodesEachProducer = async (melodyId: string, userId: string) => {
+  const melodyData = await Melody.findById(melodyId).select(["image", "audioUrl"]);
+
+  if (!melodyData) throw new Error("Melody not found");
+
+  const getS3KeyFromUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    const urlObj = new URL(url);
+    return urlObj.pathname.substring(1);
+  };
+
+  const imageKey = getS3KeyFromUrl(melodyData.image);
+  const audioKey = getS3KeyFromUrl(melodyData.audioUrl);
+
+  try {
+    if (imageKey) {
+      await s3.deleteObject({ Bucket: bucketName, Key: imageKey }).promise();
+      console.log(`Deleting image file from S3: ${imageKey}`);
+    }
+
+    if (audioKey) {
+      await s3.deleteObject({ Bucket: bucketName, Key: audioKey }).promise();
+      console.log(`Deleting audio file from S3: ${audioKey}`);
+    }
+
+    const result = await Melody.deleteOne({ _id: melodyId });
+
+    if (result?.acknowledged && result?.deletedCount > 0) {
+      await User.findByIdAndUpdate(
+        { _id: userId },
+        { $inc: { melodiesCounter: -1 } },
+        { new: true, runValidators: true }
+      );
+      console.log('Melody deleted successfully');
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting melody files or data:", error);
+    return false;
   }
-  return result
-}
+};
+
+
 
 const selectFavoriteMelody = async (melodyId: string, userId: string) => {
   const melodyObjectId = new mongoose.Types.ObjectId(melodyId);
