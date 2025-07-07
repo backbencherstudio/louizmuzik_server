@@ -187,6 +187,18 @@ const favoritesMelodyAndFavouritePackForEachUser = async (currentUserId: string)
 };
 
 
+const addPaypalEmail = async (payload: string, userId: string) => {
+  const result = await User.findByIdAndUpdate(
+    { _id: userId },
+    { paypalEmail: payload },
+    { new: true, runValidators: true }
+  );
+
+  return result
+}
+
+
+
 export const UserManagement = {
   updateUserDataIntoDB,
   changePasswordIntoDB,
@@ -194,5 +206,6 @@ export const UserManagement = {
   allProducersDataWithTopProducersData,
   followingUsersAllMelodyAndPack,
   singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
-  favoritesMelodyAndFavouritePackForEachUser
+  favoritesMelodyAndFavouritePackForEachUser,
+  addPaypalEmail
 }

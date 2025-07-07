@@ -4,8 +4,6 @@ import sendResponse from "../../utils/sendResponse";
 import { PaypalService } from "./payment.service";
 
 const clientPaypaLinkToAdminAccountService = catchAsync(async (req, res) => {
-    console.log("hiiitttt");
-    
     const result = await PaypalService.clientPaypaLinkToAdminAccountService();
     sendResponse(res, {
         statusCode: httpStatus.OK,

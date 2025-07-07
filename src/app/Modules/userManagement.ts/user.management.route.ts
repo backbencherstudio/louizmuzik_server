@@ -41,6 +41,11 @@ router.get(
   UserManagementController.favoritesMelodyAndFavouritePackForEachUser,
 );
 
+router.patch(
+  '/addPaypalEmail/:userId',  //  producer paypal email ( current user id )
+  UserManagementController.addPaypalEmail,
+);
+
 
 
 

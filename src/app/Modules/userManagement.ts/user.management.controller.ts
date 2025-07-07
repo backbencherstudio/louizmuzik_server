@@ -99,12 +99,6 @@ const updateUserData = catchAsync(async (req, res) => {
 
 
 
-
-
-
-
-
-
 const changePassword = catchAsync(async (req, res) => {
   const result = await UserManagement.changePasswordIntoDB(req.params.userId, req.body);
   sendResponse(res, {
@@ -170,6 +164,17 @@ const favoritesMelodyAndFavouritePackForEachUser = catchAsync(async (req, res) =
 });
 
 
+const addPaypalEmail = catchAsync(async (req, res) => {
+  const result = await UserManagement.addPaypalEmail(req.body.paypalEmail, req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'email added successfully',
+    data: result,
+  });
+});
+
+
 
 export const UserManagementController = {
   updateUserData,
@@ -178,5 +183,6 @@ export const UserManagementController = {
   allProducersDataWithTopProducersData,
   followingUsersAllMelodyAndPack,
   singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
-  favoritesMelodyAndFavouritePackForEachUser
+  favoritesMelodyAndFavouritePackForEachUser,
+  addPaypalEmail
 }

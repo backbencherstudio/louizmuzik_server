@@ -13,21 +13,22 @@ export interface TUser {
   country: string;
   password: string;
   isDeleted: boolean;
-  expiresAt : Date;
+  expiresAt: Date;
   profile_image: string;
   isPro: boolean;
   melodiesCounter: number;
   about: string;
   followersCounter: number;
-  following: Types.ObjectId[]; 
-  favourite_melodies: Types.ObjectId[]; 
+  following: Types.ObjectId[];
+  favourite_melodies: Types.ObjectId[];
   favourite_packs: Types.ObjectId[];
   beatstarsUsername?: string;
   instagramUsername?: string;
   youtubeUsername?: string;
   tiktokUsername?: string;
-  paypalAccountId? : string;
-  accessToken? : string;
+  paypalAccountId?: string; //========== neeed to remove it 
+  accessToken?: string;  //========== neeed to remove it 
+  paypalEmail?: string
 }
 
 // ======================================>>>>>>>> Login Interface
@@ -46,4 +47,4 @@ export interface UserModel extends Model<TUser> {
 }
 
 
-export interface TampUser extends TUser {} 
+export interface TampUser extends TUser { } 

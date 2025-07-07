@@ -85,6 +85,7 @@ const userSchema = new Schema<TUser>(
     tiktokUsername: { type: String },
     paypalAccountId: { type: String },
     accessToken: { type: String },
+    paypalEmail: { type: String },
 
   },
   {
