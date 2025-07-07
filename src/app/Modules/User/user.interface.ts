@@ -26,6 +26,8 @@ export interface TUser {
   instagramUsername?: string;
   youtubeUsername?: string;
   tiktokUsername?: string;
+  paypalAccountId? : string;
+  accessToken? : string;
 }
 
 // ======================================>>>>>>>> Login Interface

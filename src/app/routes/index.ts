@@ -4,6 +4,7 @@ import { UserManagementRouter } from '../Modules/userManagement.ts/user.manageme
 import { UserManagementRouterForAdmin } from '../Modules/admin/userManagementByAdmin/userManagementByAdmin.route';
 import { MelodyRouter } from '../Modules/Melody/melody.route';
 import { pactRoute } from '../Modules/Pack/pack.route';
+import { paymentRouter } from '../Modules/Payment/payment.route';
 const router = express.Router();
 
 const moduleRoutes = [
@@ -12,6 +13,7 @@ const moduleRoutes = [
   { path: '/melody', route: MelodyRouter },
   { path: '/pack', route: pactRoute },
   { path: '/auth/userManagement', route: UserManagementRouter },
+  { path: '/payment', route: paymentRouter },
 ];
 
 moduleRoutes.forEach((pathRouter) =>

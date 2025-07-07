@@ -83,6 +83,8 @@ const userSchema = new Schema<TUser>(
     instagramUsername: { type: String },
     youtubeUsername: { type: String },
     tiktokUsername: { type: String },
+    paypalAccountId: { type: String },
+    accessToken: { type: String },
 
   },
   {
