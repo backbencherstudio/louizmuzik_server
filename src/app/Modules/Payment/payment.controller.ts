@@ -3,6 +3,42 @@ import { catchAsync } from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { PaypalService } from "./payment.service";
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const clientPaypaLinkToAdminAccountService = catchAsync(async (req, res) => {
     const result = await PaypalService.clientPaypaLinkToAdminAccountService();
     sendResponse(res, {
