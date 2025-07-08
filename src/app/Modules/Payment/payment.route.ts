@@ -1,11 +1,15 @@
-import express from 'express'
+// =======================================
+// ✅ Step 3: payment.route.ts
+// =======================================
+
+import express from 'express';
 import { paymentController } from './payment.controller';
 
 const router = express.Router();
 
-router.get("/link-paypal", paymentController.clientPaypaLinkToAdminAccountService);
+router.post("/create-order", paymentController.createOrderWithPaypal);
+router.post("/capture-order/:orderID", paymentController.captureOrder);
+router.post("/webhook", paymentController.webhookEvent);
 
-router.get("/paypal-callback", paymentController.paypalCallBack);
 
-
-export const paymentRouter = router
+export const paymentRouter = router;

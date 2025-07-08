@@ -1,3 +1,7 @@
+// =======================================
+// ✅ Step 2: route.ts
+// =======================================
+
 import express from 'express';
 import { UserRouter } from '../Modules/User/user.route';
 import { UserManagementRouter } from '../Modules/userManagement.ts/user.management.route';
@@ -5,6 +9,7 @@ import { UserManagementRouterForAdmin } from '../Modules/admin/userManagementByA
 import { MelodyRouter } from '../Modules/Melody/melody.route';
 import { pactRoute } from '../Modules/Pack/pack.route';
 import { paymentRouter } from '../Modules/Payment/payment.route';
+
 const router = express.Router();
 
 const moduleRoutes = [
@@ -17,7 +22,7 @@ const moduleRoutes = [
 ];
 
 moduleRoutes.forEach((pathRouter) =>
-  router.use(pathRouter.path, pathRouter.route),
+  router.use(pathRouter.path, pathRouter.route)
 );
 
 export default router;

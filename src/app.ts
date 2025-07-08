@@ -1,220 +1,239 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-undef */
 import express, { Application } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import axios from 'axios';
 import dotenv from 'dotenv';
 import router from './app/routes';
 import globalErrorHandler from './app/middleware/globalErrorHandlear';
 
 dotenv.config();
-
 const app: Application = express();
 
-// ===================
-// Middleware Setup
-// ===================
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: ['http://localhost:3000'],
-    credentials: true,
-  })
-);
 
-// ✅ Serve static files
+app.use(cors({
+  origin: ['http://localhost:3000'],
+  credentials: true,
+}));
+
+// Raw parser BEFORE express.json
+app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }));
+
 app.use('/uploads', express.static('uploads'));
-
-// ===================
-// Webhook Setup (Must go BEFORE express.json())
-// ===================
-const PAYPAL_API = 'https://api-m.sandbox.paypal.com'; // Use live: 'https://api-m.paypal.com'
-
-const generateAccessToken = async () => {
-  const auth = Buffer.from(
-    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET_ID}`
-  ).toString('base64');
-
-  const response = await axios.post(
-    `${PAYPAL_API}/v1/oauth2/token`,
-    'grant_type=client_credentials',
-    {
-      headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    }
-  );
-
-  return response.data.access_token;
-};
-
-app.post(
-  '/webhook',
-  express.raw({ type: 'application/json' }),
-  async (req, res) => {
-    try {
-      const rawBody = req.body.toString('utf8');
-      const event = JSON.parse(rawBody);
-
-      const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-
-      const {
-        'paypal-transmission-id': transmissionId,
-        'paypal-transmission-time': timestamp,
-        'paypal-transmission-sig': webhookSig,
-        'paypal-cert-url': certUrl,
-        'paypal-auth-algo': authAlgo,
-      } = req.headers;
-
-      const accessToken = await generateAccessToken();
-
-      const verifyResponse = await axios.post(
-        `${PAYPAL_API}/v1/notifications/verify-webhook-signature`,
-        {
-          transmission_id: transmissionId,
-          transmission_time: timestamp,
-          cert_url: certUrl,
-          auth_algo: authAlgo,
-          transmission_sig: webhookSig,
-          webhook_id: webhookId,
-          webhook_event: event,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const isValid =
-        verifyResponse.data.verification_status === 'SUCCESS';
-
-      if (!isValid) {
-        console.log('❌ Invalid webhook signature');
-        return res.status(400).send('Invalid webhook');
-      }
-
-      if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-        const resource = event.resource;
-        const amount = resource.amount?.value;
-        const transactionId = resource.id;
-        // const customId = resource?.supplementary_data?.related_ids?.order_id;
-        const customId = resource?.custom_id;
-
-        const purchaseUnit = resource.purchase_units?.[0];
-        const userId = purchaseUnit?.custom_id || customId;
-
-        console.log('✅ Webhook Verified!');
-        console.log('User ID:', userId);
-        console.log('Amount:', amount);
-        console.log('Transaction ID:', transactionId);
-
-        // 👉 Save to DB here if needed
-      }
-
-      res.sendStatus(200);
-    } catch (err: any) {
-      console.error('Webhook error:', err?.response?.data || err.message);
-      res.sendStatus(500);
-    }
-  }
-);
-
-// ===================
-// JSON Parser for Other Routes
-// ===================
 app.use(express.json());
 
-// ===================
-// API Routes
-// ===================
 app.use('/api/v1', router);
 
-// ===================
-// Create PayPal Order
-// ===================
-app.post('/create-order', async (req, res) => {
-  const { amount, userId } = req.body;
+app.get('/test', (req, res) => res.send('server running successfully'));
+app.get('/', (req, res) => res.send({ message: 'Server running successfully' }));
 
-  try {
-    const accessToken = await generateAccessToken();
-
-    const response = await axios.post(
-      `${PAYPAL_API}/v2/checkout/orders`,
-      {
-        intent: 'CAPTURE',
-        purchase_units: [
-          {
-            amount: { currency_code: 'USD', value: amount },
-            custom_id: userId, // ✅ Attach user ID
-          },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    res.json({ id: response.data.id });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Something went wrong');
-  }
-});
-
-// ===================
-// Capture PayPal Order
-// ===================
-app.post('/capture-order/:orderID', async (req, res) => {
-  const { orderID } = req.params;
-
-  try {
-    const accessToken = await generateAccessToken();
-
-    const response = await axios.post(
-      `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error capturing order');
-  }
-});
-
-// ===================
-// Test Route
-// ===================
-app.get('/test', (req, res) => {
-  res.send('server running successfully');
-});
-
-// ===================
-// Global Error Handler
-// ===================
 app.use(globalErrorHandler);
 
-// ===================
-// Root Route
-// ===================
-app.get('/', (req, res) => {
-  res.send({ message: 'Server running successfully' });
-});
-
 export default app;
+
+
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable no-undef */
+// import express, { Application } from 'express';
+// import cors from 'cors';
+// import cookieParser from 'cookie-parser';
+// // import axios from 'axios';
+// import dotenv from 'dotenv';
+// import router from './app/routes';
+// import globalErrorHandler from './app/middleware/globalErrorHandlear';
+
+// dotenv.config();
+// const app: Application = express();
+// app.use(cookieParser());
+// app.use(
+//   cors({
+//     origin: ['http://localhost:3000'],
+//     credentials: true,
+//   })
+// );
+// app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" })); 
+
+// app.use('/uploads', express.static('uploads'));
+
+// app.use(express.json());
+// app.use('/api/v1', router);
+
+
+// app.get('/test', (req, res) => {
+//   res.send('server running successfully');
+// });
+// app.use(globalErrorHandler);
+
+// app.get('/', (req, res) => {
+//   res.send({ message: 'Server running successfully' });
+// });
+
+// export default app;
+
+
+
+
+
+
+
+
+
+// const PAYPAL_API = 'https://api-m.sandbox.paypal.com'; // Use live: 'https://api-m.paypal.com'
+
+// const generateAccessToken = async () => {
+//   const auth = Buffer.from(
+//     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET_ID}`
+//   ).toString('base64');
+
+//   const response = await axios.post(
+//     `${PAYPAL_API}/v1/oauth2/token`,
+//     'grant_type=client_credentials',
+//     {
+//       headers: {
+//         Authorization: `Basic ${auth}`,
+//         'Content-Type': 'application/x-www-form-urlencoded',
+//       },
+//     }
+//   );
+
+//   return response.data.access_token;
+// };
+
+// app.post(
+//   '/webhook',
+//   express.raw({ type: 'application/json' }),
+//   async (req, res) => {
+
+//     try {
+//       const rawBody = req.body.toString('utf8');
+//       const event = JSON.parse(rawBody);
+
+//       const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+
+//       const {
+//         'paypal-transmission-id': transmissionId,
+//         'paypal-transmission-time': timestamp,
+//         'paypal-transmission-sig': webhookSig,
+//         'paypal-cert-url': certUrl,
+//         'paypal-auth-algo': authAlgo,
+//       } = req.headers;
+
+//       const accessToken = await generateAccessToken();
+
+//       const verifyResponse = await axios.post(
+//         `${PAYPAL_API}/v1/notifications/verify-webhook-signature`,
+//         {
+//           transmission_id: transmissionId,
+//           transmission_time: timestamp,
+//           cert_url: certUrl,
+//           auth_algo: authAlgo,
+//           transmission_sig: webhookSig,
+//           webhook_id: webhookId,
+//           webhook_event: event,
+//         },
+//         {
+//           headers: {
+//             Authorization: `Bearer ${accessToken}`,
+//             'Content-Type': 'application/json',
+//           },
+//         }
+//       );
+
+//       const isValid =
+//         verifyResponse.data.verification_status === 'SUCCESS';
+
+//       if (!isValid) {
+//         console.log('❌ Invalid webhook signature');
+//         return res.status(400).send('Invalid webhook');
+//       }
+
+//       if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+//         const resource = event.resource;
+//         const amount = resource.amount?.value;
+//         const transactionId = resource.id;
+//         // const customId = resource?.supplementary_data?.related_ids?.order_id;
+//         const customId = resource?.custom_id;
+
+//         const purchaseUnit = resource.purchase_units?.[0];
+//         const userId = purchaseUnit?.custom_id || customId;
+
+//         console.log('✅ Webhook Verified!');
+//         console.log('User ID:', userId);
+//         console.log('Amount:', amount);
+//         console.log('Transaction ID:', transactionId);
+
+//         // 👉 Save to DB here if needed
+//       }
+
+//       res.sendStatus(200);
+//     } catch (err: any) {
+//       console.error('Webhook error:', err?.response?.data || err.message);
+//       res.sendStatus(500);
+//     }
+
+
+//   }
+// );
+
+
+// app.post('/create-order', async (req, res) => {
+//   const { amount, userId } = req.body;
+
+//   try {
+//     const accessToken = await generateAccessToken();
+
+//     const response = await axios.post(
+//       `${PAYPAL_API}/v2/checkout/orders`,
+//       {
+//         intent: 'CAPTURE',
+//         purchase_units: [
+//           {
+//             amount: { currency_code: 'USD', value: amount },
+//             custom_id: userId, // ✅ Attach user ID
+//           },
+//         ],
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     res.json({ id: response.data.id });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Something went wrong');
+//   }
+// });
+
+// app.post('/capture-order/:orderID', async (req, res) => {
+//   const { orderID } = req.params;
+
+//   try {
+//     const accessToken = await generateAccessToken();
+
+//     const response = await axios.post(
+//       `${PAYPAL_API}/v2/checkout/orders/${orderID}/capture`,
+//       {},
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     res.json(response.data);
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send('Error capturing order');
+//   }
+
+// });
+
+
+
 
 
 
