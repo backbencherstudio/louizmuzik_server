@@ -182,9 +182,9 @@ const webhookEvent = async (event: any, headers: any) => {
     //   const paypalFee = amount * 0.029 + 0.30
     //   const adminAmount = (amount * 0.3).toFixed(2);
     //   const payoutAmount = ((amount * 0.97).toFixed(2) );
-const paypalFee = grossAmount * 0.029 + 0.30;
-const netAmount = grossAmount - paypalFee;
-const producerAmount = (netAmount * 0.97).toFixed(2); // You keep 3%
+      const paypalFee = grossAmount * 0.029 + 0.30;
+      const netAmount = grossAmount - paypalFee;
+      const producerAmount = (netAmount * 0.97).toFixed(2); // You keep 3%
 
       console.log("💰 Gross amount:", grossAmount);
       console.log("💸 PayPal Fee:", paypalFee.toFixed(2));
