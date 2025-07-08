@@ -97,12 +97,12 @@ app.post(
         return res.status(400).send('Invalid webhook');
       }
 
-      // ✅ Handle payment capture
       if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
         const resource = event.resource;
         const amount = resource.amount?.value;
         const transactionId = resource.id;
-        const customId = resource?.supplementary_data?.related_ids?.order_id;
+        // const customId = resource?.supplementary_data?.related_ids?.order_id;
+        const customId = resource?.custom_id;
 
         const purchaseUnit = resource.purchase_units?.[0];
         const userId = purchaseUnit?.custom_id || customId;
