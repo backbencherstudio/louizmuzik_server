@@ -56,7 +56,6 @@ const createOrderWithPaypal = async (amount: any, userId: string) => {
                 },
             }
         );
-        console.log("✅ PayPal Order Created:", response.data.id);
         return { id: response.data.id };
     } catch (err: any) {
         console.error("❌ Create Order Error:", err?.response?.data || err.message);
@@ -77,7 +76,6 @@ const captureOrder = async (orderID: string) => {
                 },
             }
         );
-        console.log("✅ Order Captured:", response.data);
         return response.data;
     } catch (err: any) {
         console.error("❌ Capture Order Error:", err?.response?.data || err.message);
@@ -85,70 +83,201 @@ const captureOrder = async (orderID: string) => {
     }
 };
 
-const webhookEvent = async (event: any, headers: any) => {
-    try {
-        const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-        const {
-            'paypal-transmission-id': transmissionId,
-            'paypal-transmission-time': timestamp,
-            'paypal-transmission-sig': webhookSig,
-            'paypal-cert-url': certUrl,
-            'paypal-auth-algo': authAlgo,
-        } = headers;
+const sendPayoutToEmail = async (receiverEmail: string, amount: number) => {
+  try {
+    const accessToken = await generateAccessToken();
 
-        const accessToken = await generateAccessToken();
-
-        const verifyResponse = await axios.post(
-            `${PAYPAL_API}/v1/notifications/verify-webhook-signature`,
-            {
-                transmission_id: transmissionId,
-                transmission_time: timestamp,
-                cert_url: certUrl,
-                auth_algo: authAlgo,
-                transmission_sig: webhookSig,
-                webhook_id: webhookId,
-                webhook_event: event,
+    const response = await axios.post(
+      `${PAYPAL_API}/v1/payments/payouts`,
+      {
+        sender_batch_header: {
+          sender_batch_id: `batch_${Date.now()}`,
+          email_subject: "You’ve received a payout from MelodyBox",
+        },
+        items: [
+          {
+            recipient_type: "EMAIL",
+            amount: {
+              value: amount.toFixed(2),
+              currency: "USD",
             },
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            }
-        );
+            receiver: receiverEmail,
+            note: "Thanks for selling your music on MelodyBox!",
+            sender_item_id: `item_${Date.now()}`,
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-        const isValid = verifyResponse.data.verification_status === 'SUCCESS';
-        if (!isValid) {
-            console.error('❌ Invalid webhook signature');
-            throw new AppError(400, "Invalid webhook signature");
-        }
+    return response.data;
+  } catch (err: any) {
+    console.error("❌ Payout Error:", err?.response?.data || err.message);
+    throw new AppError(500, "Payout failed");
+  }
+};
 
-        if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-            const resource = event.resource;
-            const amount = resource.amount?.value;
-            const transactionId = resource.id;
-            const customId = resource?.custom_id;
-            const purchaseUnit = resource.purchase_units?.[0];
-            const userId = purchaseUnit?.custom_id || customId;
+const webhookEvent = async (event: any, headers: any) => {
+  try {
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+    const {
+      'paypal-transmission-id': transmissionId,
+      'paypal-transmission-time': timestamp,
+      'paypal-transmission-sig': webhookSig,
+      'paypal-cert-url': certUrl,
+      'paypal-auth-algo': authAlgo,
+    } = headers;
 
-            const userData = await User.findById({_id : userId})
-            console.log({userData});
+    const accessToken = await generateAccessToken();
+
+    const verifyResponse = await axios.post(
+      `${PAYPAL_API}/v1/notifications/verify-webhook-signature`,
+      {
+        transmission_id: transmissionId,
+        transmission_time: timestamp,
+        cert_url: certUrl,
+        auth_algo: authAlgo,
+        transmission_sig: webhookSig,
+        webhook_id: webhookId,
+        webhook_event: event,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const isValid = verifyResponse.data.verification_status === 'SUCCESS';
+    if (!isValid) {
+      console.error('❌ Invalid webhook signature');
+      throw new AppError(400, "Invalid webhook signature");
+    }
+
+    // 🧾 If the payment was successful
+    if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+      const resource = event.resource;
+    //   const amount = parseFloat(resource.amount?.value);
+   const grossAmount = parseFloat(resource.amount?.value); // total amount paid by user
+
+      const transactionId = resource.id;
+      const customId = resource?.custom_id;
+      const purchaseUnit = resource.purchase_units?.[0];
+      const userId = purchaseUnit?.custom_id || customId;
+
+      // 🔍 Find producer data by userId
+      const userData = await User.findById({ _id: userId });
+
+      if (!userData?.paypalEmail) {
+        throw new AppError(400, "Producer PayPal email not found");
+      }
+
+      const producerEmail = userData.paypalEmail;
+    //   const paypalFee = amount * 0.029 + 0.30
+    //   const adminAmount = (amount * 0.3).toFixed(2);
+    //   const payoutAmount = ((amount * 0.97).toFixed(2) );
+const paypalFee = grossAmount * 0.029 + 0.30;
+const netAmount = grossAmount - paypalFee;
+const producerAmount = (netAmount * 0.97).toFixed(2); // You keep 3%
+
+      console.log("💰 Gross amount:", grossAmount);
+      console.log("💸 PayPal Fee:", paypalFee.toFixed(2));
+      console.log("💵 Net After Fee:", netAmount.toFixed(2));
+      console.log("✅ 97% to Producer:", producerAmount);
+
+
+      console.log("✅ Webhook Verified:");
+      console.log("User ID:", userId);
+      console.log("Transaction ID:", transactionId);
+      console.log("Producer Email:", producerEmail);
+      console.log("💸 paypalFee : $", paypalFee);
+
+      // ✅ Call the payout function
+      await sendPayoutToEmail(producerEmail, parseFloat(producerAmount));
+
+      console.log("✅ Payout successfully sent to producer");
+    }
+
+    return 200;
+  } catch (err: any) {
+    console.error('❌ Webhook Handling Error:', err?.response?.data || err.message);
+    return 500;
+  }
+};
+
+// 8,539.97 admin
+// 111.55 reciver
+
+// const webhookEvent = async (event: any, headers: any) => {
+//     try {
+//         const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+//         const {
+//             'paypal-transmission-id': transmissionId,
+//             'paypal-transmission-time': timestamp,
+//             'paypal-transmission-sig': webhookSig,
+//             'paypal-cert-url': certUrl,
+//             'paypal-auth-algo': authAlgo,
+//         } = headers;
+
+//         const accessToken = await generateAccessToken();
+
+//         const verifyResponse = await axios.post(
+//             `${PAYPAL_API}/v1/notifications/verify-webhook-signature`,
+//             {
+//                 transmission_id: transmissionId,
+//                 transmission_time: timestamp,
+//                 cert_url: certUrl,
+//                 auth_algo: authAlgo,
+//                 transmission_sig: webhookSig,
+//                 webhook_id: webhookId,
+//                 webhook_event: event,
+//             },
+//             {
+//                 headers: {
+//                     Authorization: `Bearer ${accessToken}`,
+//                     'Content-Type': 'application/json',
+//                 },
+//             }
+//         );
+
+//         const isValid = verifyResponse.data.verification_status === 'SUCCESS';
+//         if (!isValid) {
+//             console.error('❌ Invalid webhook signature');
+//             throw new AppError(400, "Invalid webhook signature");
+//         }
+
+//         if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+//             const resource = event.resource;
+//             const amount = resource.amount?.value;
+//             const transactionId = resource.id;
+//             const customId = resource?.custom_id;
+//             const purchaseUnit = resource.purchase_units?.[0];
+//             const userId = purchaseUnit?.custom_id || customId;
+
+//             const userData = await User.findById({_id : userId})
+//             console.log({userData});
             
 
-            console.log('✅ Webhook Verified!');
-            console.log('User ID:', userId);
-            console.log('Amount:', amount);
-            console.log('Transaction ID:', transactionId);
+//             console.log('✅ Webhook Verified!');
+//             console.log('User ID:', userId);
+//             console.log('Amount:', amount);
+//             console.log('Transaction ID:', transactionId);
 
-            // You can save transaction to DB here
-        }
+//             // You can save transaction to DB here
+//         }
 
-        return 200;
-    } catch (err: any) {
-        console.error('❌ Webhook Handling Error:', err?.response?.data || err.message);
-        return 500;
-    }
-};
+//         return 200;
+//     } catch (err: any) {
+//         console.error('❌ Webhook Handling Error:', err?.response?.data || err.message);
+//         return 500;
+//     }
+// };
 
 export const paymentService = {
     createOrderWithPaypal,
