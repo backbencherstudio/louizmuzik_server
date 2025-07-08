@@ -4,8 +4,8 @@ import sendResponse from "../../utils/sendResponse";
 import { paymentService } from "./payment.service";
 
 const createOrderWithPaypal = catchAsync(async (req, res) => {
-  const { amount, userId } = req.body;
-  const result = await paymentService.createOrderWithPaypal(amount, userId);
+  const { amount, selectedData } = req.body;
+  const result = await paymentService.createOrderWithPaypal(amount, selectedData);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -36,49 +36,8 @@ const webhookEvent = catchAsync(async (req, res) => {
   });
 });
 
-
-// export const paymentController = {
-//   createOrderWithPaypal,
-//   captureOrder,
-//   webhookEvent,
-// };
-
-
-// const clientPaypaLinkToAdminAccountService = catchAsync(async (req, res) => {
-//     const result = await PaypalService.clientPaypaLinkToAdminAccountService();
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: 'client Paypal Link To Admin Account Service',
-//         data: result,
-//     });
-// });
-
-// const paypalCallBack = catchAsync(async (req, res) => {
-//     const { code, userId } = req.query; // Extract code and userId from query parameters
-
-//     if (!code || !userId) {
-//         return res.status(400).send("Missing code or userId");
-//     }
-//     const result = await PaypalService.paypalCallBack(code as string, userId as string);
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: 'paypalCallBack',
-//         data: result,
-//     });
-// });
-
-
 export const paymentController = {
     createOrderWithPaypal,
     captureOrder,
     webhookEvent,
-
-
-    // =================================
-    // ================================= >>>>  
-    // =================================
-    // clientPaypaLinkToAdminAccountService,
-    // paypalCallBack
 }
