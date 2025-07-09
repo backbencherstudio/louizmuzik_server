@@ -151,6 +151,20 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
     return result
 }
 
+const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
+  const result = await PackPurchase.find({ userId })
+    .populate({
+      path: "packId",
+      select: "title producer thumbnail_image audio_path zip_path video_path price description genre"
+    })
+    .populate({
+      path: "selectedProducerId",
+      select: "producer_name"
+    });
+
+  return result;
+};
+
 
 export const packService = {
     createPackIntoDB,
@@ -160,5 +174,6 @@ export const packService = {
     selectFavoritePack,
     getSinglePackAndAllPackEachUser,
     deleteSinglePackByUser,
-    packPurchaseDataStoreIntoDB
+    packPurchaseDataStoreIntoDB,
+    getSingleUserALlPurchaseDataFormDB
 }

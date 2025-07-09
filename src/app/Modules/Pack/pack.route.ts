@@ -24,6 +24,8 @@ router.get(   //============== //=== this api for single pack page
 
 router.post('/packPurchase', packController.packPurchaseDataStoreIntoDB)
 
+router.get('/packPurchase/:userId', packController.getSingleUserALlPurchaseDataFormDB)
+
 router.delete('/:packId', packController.deleteSinglePackByUser)
 
 

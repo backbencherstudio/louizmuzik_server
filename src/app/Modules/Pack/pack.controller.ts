@@ -257,6 +257,16 @@ const packPurchaseDataStoreIntoDB = catchAsync(async (req, res) => {
     });
 });
 
+const getSingleUserALlPurchaseDataFormDB = catchAsync(async (req, res) => {
+    const result = await packService.getSingleUserALlPurchaseDataFormDB(req.params.userId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Get all purchase data successfully for each user',
+        data: result,
+    });
+});
+
 
 export const packController = {
     getAllPackFromDB,
@@ -266,5 +276,6 @@ export const packController = {
     selectFavoritePack,
     getSinglePackAndAllPackEachUser,
     deleteSinglePackByUser,
-    packPurchaseDataStoreIntoDB
+    packPurchaseDataStoreIntoDB,
+    getSingleUserALlPurchaseDataFormDB
 }
