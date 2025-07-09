@@ -7,16 +7,49 @@ import { generateAccessToken, PAYPAL_API } from '../../middleware/generateAccess
 import { sendPayoutToEmail } from '../../middleware/sendPayoutToEmail';
 
 
+// const createOrderWithPaypal = async (amount: any, selectedData: any) => {
+//   try {
+//     const accessToken = await generateAccessToken();
+//     const response = await axios.post(
+//       `${PAYPAL_API}/v2/checkout/orders`,
+//       {
+//         intent: 'CAPTURE',
+//         purchase_units: [
+//           {
+//             amount: { currency_code: 'USD', value: amount },
+//             custom_id: JSON.stringify(selectedData),
+//           },
+//         ],
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+//     return { id: response.data.id };
+//   } catch (err: any) {
+//     console.error("❌ Create Order Error:", err?.response?.data || err.message);
+//     throw new AppError(500, err?.response?.data?.message || "Something went wrong while creating order");
+//   }
+// };
+
+
 const createOrderWithPaypal = async (amount: any, selectedData: any) => {
   try {
     const accessToken = await generateAccessToken();
+
     const response = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
-        intent: 'CAPTURE',
+        intent: "CAPTURE",
         purchase_units: [
           {
-            amount: { currency_code: 'USD', value: amount },
+            amount: {
+              currency_code: "USD",
+              value: amount,
+            },
             custom_id: JSON.stringify(selectedData),
           },
         ],
@@ -24,17 +57,29 @@ const createOrderWithPaypal = async (amount: any, selectedData: any) => {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
+
     return { id: response.data.id };
   } catch (err: any) {
-    console.error("❌ Create Order Error:", err?.response?.data || err.message);
-    throw new AppError(500, err?.response?.data?.message || "Something went wrong while creating order");
+    const statusCode = err?.response?.status || 500;
+
+    // Extract possible PayPal error message
+    const paypalError = err?.response?.data;
+    const mainMessage = paypalError?.message || err.message || "Unknown PayPal error";
+    const detailedDescription = paypalError?.details?.[0]?.description;
+
+    const finalMessage = detailedDescription
+      ? `${mainMessage}: ${detailedDescription}`
+      : mainMessage;
+
+    console.error("❌ PayPal Create Order Error:", paypalError);
+
+    throw new AppError(statusCode, `PayPal Error - ${finalMessage}`);
   }
 };
-
 
 const captureOrder = async (orderID: string) => {
   try {
