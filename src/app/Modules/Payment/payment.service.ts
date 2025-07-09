@@ -268,12 +268,8 @@ const webhookEvent = async (event: any, headers: any) => {
 
       const payoutList = aggregationResult.map((producer) => {
         const gross = producer.totalPrice || 0;
-
-        // Step 1: PayPal transaction fee
-        const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2));
+        const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2)) * 2;
         const afterPaypal = gross - paypalFee;
-
-        // Step 2: Platform service fee (3%) from the amount after PayPal cut
         const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
         const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
 
@@ -283,7 +279,7 @@ const webhookEvent = async (event: any, headers: any) => {
           grossAmount: gross,
           paypalFee,
           platformFee: serviceFee,
-          payoutAmount: payout - parseFloat((payout * 0.03).toFixed(2)),
+          payoutAmount: payout ,
         };
       });
 
