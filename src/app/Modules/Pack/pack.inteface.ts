@@ -18,3 +18,10 @@ export interface IPack {
   favorites: number;
   highlight: boolean  // this is for marketplace page hero section
 }
+
+export interface IPackPurchase {
+  packId: Schema.Types.ObjectId;
+  price: number;
+  selectedProducerId: Schema.Types.ObjectId;
+  userId: Schema.Types.ObjectId;
+}

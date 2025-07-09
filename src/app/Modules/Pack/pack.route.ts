@@ -22,6 +22,8 @@ router.get(   //============== //=== this api for single pack page
 );
 
 
+router.post('/packPurchase', packController.packPurchaseDataStoreIntoDB)
+
 router.delete('/:packId', packController.deleteSinglePackByUser)
 
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose";
-import { IPack } from "./pack.inteface";
-import { Pack } from "./pack.module";
+import { IPack, IPackPurchase } from "./pack.inteface";
+import { Pack, PackPurchase } from "./pack.module";
 import { User } from "../User/user.model";
 import { AppError } from "../../errors/AppErrors";
 import httpStatus from "http-status";
@@ -144,10 +144,12 @@ const deleteSinglePackByUser = async (packId: string) => {
 };
 
 
-// const deleteSinglePackByUser = async (packId: string) => {
-//     const result = await Pack.findByIdAndDelete({ _id: packId })
-//     return result
-// }
+
+
+const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
+    const result = await PackPurchase.insertMany(payload)
+    return result
+}
 
 
 export const packService = {
@@ -157,5 +159,6 @@ export const packService = {
     getSingleUserAllPackFromDB,
     selectFavoritePack,
     getSinglePackAndAllPackEachUser,
-    deleteSinglePackByUser
+    deleteSinglePackByUser,
+    packPurchaseDataStoreIntoDB
 }

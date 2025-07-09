@@ -247,6 +247,16 @@ const deleteSinglePackByUser = catchAsync(async (req, res) => {
     });
 });
 
+const packPurchaseDataStoreIntoDB = catchAsync(async (req, res) => {
+    const result = await packService.packPurchaseDataStoreIntoDB(req.body);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Payment Successfully , you can access your pack on your dashboard',
+        data: result,
+    });
+});
+
 
 export const packController = {
     getAllPackFromDB,
@@ -255,5 +265,6 @@ export const packController = {
     getSingleUserAllPackFromDB,
     selectFavoritePack,
     getSinglePackAndAllPackEachUser,
-    deleteSinglePackByUser
+    deleteSinglePackByUser,
+    packPurchaseDataStoreIntoDB
 }
