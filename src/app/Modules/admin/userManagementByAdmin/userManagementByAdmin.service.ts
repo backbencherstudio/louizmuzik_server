@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose"
 import { DailyMelodyDownloadStats, Melody } from "../../Melody/melody.module"
-import { Pack } from "../../Pack/pack.module"
+import { Pack, PackPurchase } from "../../Pack/pack.module"
 import { User } from "../../User/user.model"
 
 const getALlUserByAdmin = async () => {
@@ -80,7 +80,8 @@ const deleteUser = async (userId: string) => {
         // Delete related data
         await Melody.deleteMany({ userId }).session(session);
         await Pack.deleteMany({ userId }).session(session);
-        await DailyMelodyDownloadStats.deleteMany({ producerId : userId }).session(session);
+        await DailyMelodyDownloadStats.deleteMany({ producerId: userId }).session(session);
+        await PackPurchase.deleteMany({ userId }).session(session)
 
         // Finally delete the user
         await User.deleteOne({ _id: userId }).session(session);
