@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { AppError } from "../../errors/AppErrors";
 import mongoose from 'mongoose';
 import { User } from '../User/user.model';
 import { generateAccessToken, PAYPAL_API } from '../../middleware/generateAccessTokenForPaypal';
 import { sendPayoutToEmail } from '../../middleware/sendPayoutToEmail';
+import { AppError } from '../../errors/AppErrors';
 
 
 // const createOrderWithPaypal = async (amount: any, selectedData: any) => {
@@ -34,6 +34,181 @@ import { sendPayoutToEmail } from '../../middleware/sendPayoutToEmail';
 //     throw new AppError(500, err?.response?.data?.message || "Something went wrong while creating order");
 //   }
 // };
+
+// const paypalSubscription = async (amount: any) => {
+//   // const { amount } = req.body;
+//   const accessToken = await generateAccessToken();
+//   console.log("hiiiiitttttt");
+  
+
+//   try {
+//     // 1️⃣ Create Product
+//     const product = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
+//       {
+//         name: "Dynamic Subscription Product",
+//         type: "SERVICE",
+//         category: "SOFTWARE",
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     // 2️⃣ Create Plan with passed amount
+//     const plan = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
+//       {
+//         product_id: product.data.id,
+//         name: `Subscription for $${amount}`,
+//         billing_cycles: [
+//           {
+//             frequency: { interval_unit: "MONTH", interval_count: 1 },
+//             tenure_type: "REGULAR",
+//             sequence: 1,
+//             total_cycles: 0,
+//             pricing_scheme: {
+//               fixed_price: {
+//                 value: amount.toString(),
+//                 currency_code: "USD",
+//               },
+//             },
+//           },
+//         ],
+//         payment_preferences: {
+//           auto_bill_outstanding: true,
+//           payment_failure_threshold: 1,
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     // 3️⃣ Create Subscription
+//     const subscription = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
+//       {
+//         plan_id: plan.data.id,
+//         application_context: {
+//           brand_name: "",
+//           user_action: "SUBSCRIBE_NOW",
+//           return_url: "http://localhost:3000/success",
+//           cancel_url: "http://localhost:3000/cancel",
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     const approvalLink = subscription.data.links.find(
+//       (link: { rel: string; }) => link.rel === "approve"
+//     );
+
+//     // res.json({ url: approvalLink.href });
+//     return { url: approvalLink.href }
+//   } catch (err: any) {
+//     // res.status(500).json({ error: err.response?.data || err.message });
+//     // throw new AppError(500, err.response?.data || err.message)
+//     throw new AppError(500,  err?.response?.data || err?.message);
+//   }
+// }
+
+export const paypalSubscription = async (amount: number) => {
+  const accessToken = await generateAccessToken();
+
+  try {
+    const product = await axios.post(
+      `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
+      {
+        name: "Dynamic Subscription Product",
+        type: "SERVICE",
+        category: "SOFTWARE",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const plan = await axios.post(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
+      {
+        product_id: product.data.id,
+        name: `Subscription for $${amount}`,
+        billing_cycles: [
+          {
+            frequency: { interval_unit: "MONTH", interval_count: 1 },
+            tenure_type: "REGULAR",
+            sequence: 1,
+            total_cycles: 0,
+            pricing_scheme: {
+              fixed_price: {
+                value: amount.toString(),
+                currency_code: "USD",
+              },
+            },
+          },
+        ],
+        payment_preferences: {
+          auto_bill_outstanding: true,
+          payment_failure_threshold: 1,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const subscription = await axios.post(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
+      {
+        plan_id: plan.data.id,
+        application_context: {
+          brand_name: "melody",
+          user_action: "SUBSCRIBE_NOW",
+          return_url: "http://localhost:3000/success",
+          cancel_url: "http://localhost:3000/cancel",
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const approvalLink = subscription.data.links.find(
+      (link: any) => link.rel === "approve"
+    );
+
+    if (!approvalLink) {
+      throw new AppError(500, "Approval link not found");
+    }
+
+    return { url: approvalLink.href };
+
+  } catch (error: any) {
+    console.error("❌ Paypal Subscription Error:", error.response?.data || error.message);
+    throw new AppError(500, error.response?.data?.message || error.message);
+  }
+};
 
 
 const createOrderWithPaypal = async (amount: any, selectedData: any) => {
@@ -142,7 +317,7 @@ const webhookEvent = async (event: any, headers: any) => {
     }
 
     console.log("webhook hiiitt");
-    
+
 
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
@@ -247,6 +422,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
 
 export const paymentService = {
+  paypalSubscription,
   createOrderWithPaypal,
   captureOrder,
   webhookEvent
