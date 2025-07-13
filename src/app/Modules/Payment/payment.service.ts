@@ -5,6 +5,8 @@ import { User } from '../User/user.model';
 import { generateAccessToken, PAYPAL_API } from '../../middleware/generateAccessTokenForPaypal';
 import { sendPayoutToEmail } from '../../middleware/sendPayoutToEmail';
 import { AppError } from '../../errors/AppErrors';
+import { Transactions } from './payment.module';
+import httpStatus from 'http-status';
 
 
 // const createOrderWithPaypal = async (amount: any, selectedData: any) => {
@@ -422,24 +424,73 @@ const webhookEvent = async (event: any, headers: any) => {
 
       console.log("💸 Final Payout List (per producer):", payoutList);
 
+      // await Promise.all(
+      //   payoutList.map((item) =>
+      //     sendPayoutToEmail(item.paypalEmail, item.payoutAmount)
+      //   )
+      // );
+
       await Promise.all(
-        payoutList.map((item) =>
-          sendPayoutToEmail(item.paypalEmail, item.payoutAmount)
-        )
+        payoutList.map(async (item) => {
+          try {
+            await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
+            const user = await User.findById(item.producerId).select("email fullName _id producer_name");
+
+            console.log(439, user);
+
+
+            if (user) {
+              const transaction = {
+                userId: user._id,
+                name: user.producer_name,
+                email: user.email,
+                salesAmount: item.payoutAmount,
+                commission: item.platformFee,
+              };
+              console.log(447, transaction);
+
+              await Transactions.create(transaction);
+              console.log("✅ Transaction recorded for:", user.email);
+            } else {
+              console.warn("⚠️ User not found for producerId:", item.producerId);
+            }
+          } catch (err: any) {
+            console.error("❌ Payout or transaction failed:", err.message);
+          }
+        })
       );
+
+
     }
 
 
     if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
       const subscriptionId = event.resource.id;
       const planId = event.resource.plan_id;
-      const email = event.resource.subscriber.email_address;
+      const paypalEmail = event.resource.subscriber.email_address;
       const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
+      const amount = event.resource.billing_info?.last_payment?.amount?.value;
 
       console.log("✅ Subscription ID:", subscriptionId);
       console.log("👤 Customer Name:", name);
-      console.log("📧 Customer Email:", email);
+      console.log("📧 Customer  paypal Email:", paypalEmail);
       console.log("🧾 Plan ID:", planId);
+      console.log("💰 Subscription Amount:", amount);
+
+      const subscribedUserData = await User.findOne({ paypalEmail });
+      if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
+
+      const transaction = {
+        email: subscribedUserData.email,
+        name: subscribedUserData.producer_name,
+        userId: subscribedUserData._id,
+        subscriptionAmount: parseInt(amount),
+        salesAmount: 0,
+        commission: 0,
+      };
+      await Transactions.create(transaction);
+
+
 
       // ➕ Here you can store the data to MongoDB or any DB
     }
