@@ -18,6 +18,8 @@ const packSchema = new Schema<IPack>(
         bpm: { type: Number, required: true },
         key: { type: String, required: true },
         favorites: { type: Number, default: 0 },
+        sales: { type: Number },
+        profit: { type: Number },
         highlight: { type: Boolean, default: false },
     },
     {

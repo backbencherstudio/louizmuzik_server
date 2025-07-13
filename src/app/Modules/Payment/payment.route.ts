@@ -15,7 +15,10 @@ router.post("/capture-order/:orderID", paymentController.captureOrder);
 router.post("/webhook", paymentController.webhookEvent);
 // ============== Paypal
 
+
+// ============== stripe
 router.post("/stripeSubscription", stripeSubscriptionService.stripeSubscription)
+// ============== stripe
 
 
 export const paymentRouter = router;

@@ -16,6 +16,8 @@ export interface IPack {
   bpm: number;
   key: string;
   favorites: number;
+  sales?: number;
+  profit?: number;
   highlight: boolean  // this is for marketplace page hero section
 }
 

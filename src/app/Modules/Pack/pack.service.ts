@@ -146,10 +146,51 @@ const deleteSinglePackByUser = async (packId: string) => {
 
 
 
+// const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {    
+//     const result = await PackPurchase.insertMany(payload)
+//     return result
+// }
+
 const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
-    const result = await PackPurchase.insertMany(payload)
-    return result
-}
+  if (!payload || !payload.length) {
+    throw new Error("❌ No pack purchase data provided.");
+  }
+
+ const aggregated = payload.reduce((acc, item) => {
+  const packId = item.packId.toString();
+
+  if (!acc[packId]) {
+    acc[packId] = { salesCount: 0, profit: 0 };
+  }
+
+  acc[packId].salesCount += 1;
+  acc[packId].profit += item.price;
+
+  return acc;
+}, {} as Record<string, { salesCount: number; profit: number }>);
+
+  const bulkOps = Object.entries(aggregated).map(([packId, values]) => ({
+    updateOne: {
+      filter: { _id: packId },
+      update: {
+        $inc: {
+          sales: values.salesCount,
+          profit: values.profit,
+        },
+      },
+    },
+  }));
+
+  // 3️⃣ Run the updates and insert purchases
+  const packUpdateResult = await Pack.bulkWrite(bulkOps);
+  const purchaseInsertResult = await PackPurchase.insertMany(payload);
+
+  return {
+    message: "✅ Pack purchases processed successfully.",
+    updatedPacks: packUpdateResult.modifiedCount,
+    insertedPurchases: purchaseInsertResult.length,
+  };
+};
 
 const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
   const result = await PackPurchase.find({ userId })
