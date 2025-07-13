@@ -141,6 +141,9 @@ const webhookEvent = async (event: any, headers: any) => {
       throw new AppError(400, "Invalid webhook signature");
     }
 
+    console.log("webhook hiiitt");
+    
+
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
       const purchaseUnit = resource.purchase_units?.[0];
@@ -215,6 +218,24 @@ const webhookEvent = async (event: any, headers: any) => {
         )
       );
     }
+
+
+    if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
+      const subscriptionId = event.resource.id;
+      const planId = event.resource.plan_id;
+      const email = event.resource.subscriber.email_address;
+      const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
+
+      console.log("✅ Subscription ID:", subscriptionId);
+      console.log("👤 Customer Name:", name);
+      console.log("📧 Customer Email:", email);
+      console.log("🧾 Plan ID:", planId);
+
+      // ➕ Here you can store the data to MongoDB or any DB
+    }
+
+
+
 
 
     return 200;
