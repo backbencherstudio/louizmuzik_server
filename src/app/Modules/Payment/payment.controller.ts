@@ -4,8 +4,8 @@ import sendResponse from "../../utils/sendResponse";
 import { paymentService } from "./payment.service";
 
 const paypalSubscription = catchAsync(async (req, res) => {
-  const { amount } = req.body;
-  const result = await paymentService.paypalSubscription(parseInt(amount));
+  const { amount, paypalEmail } = req.body;
+  const result = await paymentService.paypalSubscription(parseInt(amount), paypalEmail);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

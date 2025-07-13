@@ -28,7 +28,10 @@ export interface TUser {
   tiktokUsername?: string;
   paypalAccountId?: string; //========== neeed to remove it 
   accessToken?: string;  //========== neeed to remove it 
-  paypalEmail?: string
+  paypalEmail?: string;
+  paypalSubscriptionId? : string;
+  paypalPlanId? : string; 
+  subscribedAmount? : number
 }
 
 // ======================================>>>>>>>> Login Interface

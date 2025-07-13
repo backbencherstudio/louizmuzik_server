@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import mongoose from 'mongoose';
 import { User } from '../User/user.model';
 import { generateAccessToken, PAYPAL_API } from '../../middleware/generateAccessTokenForPaypal';
@@ -39,7 +39,7 @@ import { AppError } from '../../errors/AppErrors';
 //   // const { amount } = req.body;
 //   const accessToken = await generateAccessToken();
 //   console.log("hiiiiitttttt");
-  
+
 
 //   try {
 //     // 1️⃣ Create Product
@@ -124,7 +124,7 @@ import { AppError } from '../../errors/AppErrors';
 //   }
 // }
 
-export const paypalSubscription = async (amount: number) => {
+export const paypalSubscription = async (amount: number, paypalEmail: string) => {
   const accessToken = await generateAccessToken();
 
   try {
@@ -193,6 +193,41 @@ export const paypalSubscription = async (amount: number) => {
         },
       }
     );
+
+    const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
+    // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId");
+
+    if (userData?.paypalSubscriptionId) {
+      const existingSubId = userData?.paypalSubscriptionId;
+      try {
+        // ✅ Cancel the existing subscription
+        await axios.post(
+          `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
+          { reason: "User upgraded or changed subscription." },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("✅ Previous subscription canceled:", existingSubId);
+      } catch (cancelErr: unknown) {
+        const err = cancelErr as AxiosError;
+        console.warn("⚠️ Failed to cancel previous subscription:", err.response?.data || err.message);
+      }
+    }
+
+    await User.findOneAndUpdate(
+      { paypalEmail },
+      {
+        isPro: true,
+        paypalSubscriptionId: subscription?.data?.id,
+        paypalPlanId: plan?.data?.id,
+        subscribedAmount: amount,
+      },
+      { new: true, runValidators: true }
+    )
 
     const approvalLink = subscription.data.links.find(
       (link: any) => link.rel === "approve"
