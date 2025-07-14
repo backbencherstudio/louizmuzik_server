@@ -21,20 +21,15 @@ const s3 = new AWS.S3({
 
 
 
-// const updateUserData = catchAsync(async (req, res) => {
-
-//   const updatedData = {
-//     profile_image,
-//     ...req.body
-//   }
-//   const result = await UserManagement.updateUserDataIntoDB(req.params.userId, updatedData);
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'user update successfully',
-//     data: result,
-//   });
-// });
+const getSingleUserData = catchAsync(async (req, res) => {
+  const result = await UserManagement.getSingleUserData(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'user data get successfully',
+    data: result,
+  });
+});
 
 const updateUserData = catchAsync(async (req, res) => {
   const file = req.file;
@@ -177,6 +172,7 @@ const addPaypalEmail = catchAsync(async (req, res) => {
 
 
 export const UserManagementController = {
+  getSingleUserData,
   updateUserData,
   changePassword,
   followingProducersCalculation,

@@ -25,7 +25,10 @@ const getAbsoluteFilePath = async (dbPath: string) => {
   }
 };
 
-
+const getSingleUserData = async (userId: string) => {
+  const result = await User.findById({ _id: userId });
+  return result
+}
 
 const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => {
   const isExistsUserData = await User.findById({ _id: userId }).select("profile_image")
@@ -39,7 +42,6 @@ const updateUserDataIntoDB = async (userId: string, payload: Partial<TUser>) => 
   const result = await User.findByIdAndUpdate({ _id: userId }, updatedPayload, { new: true, runValidators: true })
   return result
 }
-
 
 
 const changePasswordIntoDB = async (userId: string, paylod: any) => {
@@ -200,6 +202,7 @@ const addPaypalEmail = async (payload: string, userId: string) => {
 
 
 export const UserManagement = {
+  getSingleUserData,
   updateUserDataIntoDB,
   changePasswordIntoDB,
   followingProducersCalculation,

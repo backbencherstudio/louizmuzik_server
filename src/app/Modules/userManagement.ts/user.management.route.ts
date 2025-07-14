@@ -6,6 +6,11 @@ import { upload } from './upload';
 const router = express.Router();
 
 router.get(
+  '/getSingleUserData/:userId',
+  UserManagementController.getSingleUserData,
+);
+
+router.get(
   '/allProducersDataWithTopProducersData',
   UserManagementController.allProducersDataWithTopProducersData,
 );
