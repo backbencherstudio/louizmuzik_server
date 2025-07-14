@@ -9,7 +9,7 @@ import { Transactions } from './payment.module';
 import httpStatus from 'http-status';
 
 
-const paypalSubscription = async (amount: number) => {
+const paypalSubscription = async (amount: number, userEmail: string) => {
   const accessToken = await generateAccessToken();
 
   try {
@@ -64,6 +64,7 @@ const paypalSubscription = async (amount: number) => {
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
       {
         plan_id: plan.data.id,
+        custom_id: userEmail,
         application_context: {
           brand_name: "melody",
           user_action: "SUBSCRIBE_NOW",
@@ -96,10 +97,48 @@ const paypalSubscription = async (amount: number) => {
 };
 
 
-export const paypalSubscriptionCancel = async (subscriptionId: string) => {
+// export const paypalSubscriptionCancel = async (subscriptionId: string) => {
+//   const accessToken = await generateAccessToken();
+
+//   try {
+//     await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+//       {
+//         reason: "User manually cancelled the subscription",
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     console.log("✅ Subscription cancelled successfully:", subscriptionId);
+//     return { success: true };
+//   } catch (error: any) {
+//     console.error("❌ Error cancelling subscription:", error.response?.data || error.message);
+//     throw new Error(error.response?.data?.message || error.message);
+//   }
+// };
+
+const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
 
   try {
+    // 1️⃣ Get subscription details to extract plan_id
+    const subRes = await axios.get(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const planId = subRes.data.plan_id;
+
+    // 2️⃣ Cancel the subscription
     await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
       {
@@ -112,14 +151,28 @@ export const paypalSubscriptionCancel = async (subscriptionId: string) => {
         },
       }
     );
-
     console.log("✅ Subscription cancelled successfully:", subscriptionId);
+
+    // 3️⃣ Deactivate the plan
+    await axios.post(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${planId}/deactivate`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("🛑 Plan deactivated successfully:", planId);
+
     return { success: true };
   } catch (error: any) {
-    console.error("❌ Error cancelling subscription:", error.response?.data || error.message);
+    console.error("❌ Error cancelling subscription or deactivating plan:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || error.message);
   }
 };
+
 
 const createOrderWithPaypal = async (amount: any, selectedData: any) => {
   try {
@@ -325,17 +378,18 @@ const webhookEvent = async (event: any, headers: any) => {
       const subscriptionId = event.resource.id;
       const planId = event.resource.plan_id;
       const paypalEmail = event.resource.subscriber.email_address;
+      const customEmail = event.resource.custom_id;
       const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
       const amount = event.resource.billing_info?.last_payment?.amount?.value;
 
-      const subscribedUserData = await User.findOne({ paypalEmail });
+      const subscribedUserData = await User.findOne({ email: customEmail });
       if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
 
-      const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
+      // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
       // after testing remove this line, ( this api and subscribedUserData this same)
 
-      if (userData?.paypalSubscriptionId) {
-        const existingSubId = userData?.paypalSubscriptionId;
+      if (subscribedUserData?.paypalSubscriptionId) {
+        const existingSubId = subscribedUserData?.paypalSubscriptionId;
         try {
           await axios.post(
             `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
@@ -347,6 +401,31 @@ const webhookEvent = async (event: any, headers: any) => {
               },
             }
           );
+
+
+          const subRes = await axios.get(
+            `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }
+          );
+          const planId = subRes.data.plan_id;
+
+          // Deactivate Plan
+          await axios.post(
+            `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${planId}/deactivate`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+
+
+
           console.log("✅ Previous subscription canceled:", existingSubId);
         } catch (cancelErr: unknown) {
           const err = cancelErr as AxiosError;
@@ -402,17 +481,53 @@ const webhookEvent = async (event: any, headers: any) => {
     }
 
     //============= if any user cancelled his sunscription 
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   console.log("subscription canselled Hiiiittttt");
+
+    //   const subscriptionId = event.resource.id;
+    //   await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
+    //     isPro: false,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //   });
+    //   console.log("❌ Subscription cancelled:", subscriptionId);
+    // }
+
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
-      console.log("subscription canselled Hiiiittttt");
-      
       const subscriptionId = event.resource.id;
+
+      // const accessToken = await generateAccessToken();
+
+      // Update DB
       await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
         isPro: false,
         paypalSubscriptionId: null,
         paypalPlanId: null,
         subscribedAmount: 0,
       });
-      console.log("❌ Subscription cancelled:", subscriptionId);
+
+      // const subRes = await axios.get(
+      //   `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
+      //   {
+      //     headers: { Authorization: `Bearer ${accessToken}` },
+      //   }
+      // );
+      // const planId = subRes.data.plan_id;
+
+      // // Deactivate Plan
+      // await axios.post(
+      //   `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${planId}/deactivate`,
+      //   {},
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${accessToken}`,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // );
+
+      console.log("❌ Subscription & Plan cancelled:", subscriptionId);
     }
 
 
@@ -447,6 +562,26 @@ const webhookEvent = async (event: any, headers: any) => {
         } catch (err: any) {
           console.error("❌ Failed to cancel suspended subscription:", err.response?.data || err.message);
         }
+
+        const subRes = await axios.get(
+          `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        const planId = subRes.data.plan_id;
+
+        // Deactivate Plan
+        await axios.post(
+          `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${planId}/deactivate`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
 
         console.log("📉 User downgraded due to payment failure:", user.email);
