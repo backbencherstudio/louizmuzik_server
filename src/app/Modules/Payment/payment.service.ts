@@ -9,124 +9,7 @@ import { Transactions } from './payment.module';
 import httpStatus from 'http-status';
 
 
-// const createOrderWithPaypal = async (amount: any, selectedData: any) => {
-//   try {
-//     const accessToken = await generateAccessToken();
-//     const response = await axios.post(
-//       `${PAYPAL_API}/v2/checkout/orders`,
-//       {
-//         intent: 'CAPTURE',
-//         purchase_units: [
-//           {
-//             amount: { currency_code: 'USD', value: amount },
-//             custom_id: JSON.stringify(selectedData),
-//           },
-//         ],
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           'Content-Type': 'application/json',
-//         },
-//       }
-//     );
-//     return { id: response.data.id };
-//   } catch (err: any) {
-//     console.error("❌ Create Order Error:", err?.response?.data || err.message);
-//     throw new AppError(500, err?.response?.data?.message || "Something went wrong while creating order");
-//   }
-// };
-
-// const paypalSubscription = async (amount: any) => {
-//   // const { amount } = req.body;
-//   const accessToken = await generateAccessToken();
-//   console.log("hiiiiitttttt");
-
-
-//   try {
-//     // 1️⃣ Create Product
-//     const product = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
-//       {
-//         name: "Dynamic Subscription Product",
-//         type: "SERVICE",
-//         category: "SOFTWARE",
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     // 2️⃣ Create Plan with passed amount
-//     const plan = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
-//       {
-//         product_id: product.data.id,
-//         name: `Subscription for $${amount}`,
-//         billing_cycles: [
-//           {
-//             frequency: { interval_unit: "MONTH", interval_count: 1 },
-//             tenure_type: "REGULAR",
-//             sequence: 1,
-//             total_cycles: 0,
-//             pricing_scheme: {
-//               fixed_price: {
-//                 value: amount.toString(),
-//                 currency_code: "USD",
-//               },
-//             },
-//           },
-//         ],
-//         payment_preferences: {
-//           auto_bill_outstanding: true,
-//           payment_failure_threshold: 1,
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     // 3️⃣ Create Subscription
-//     const subscription = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
-//       {
-//         plan_id: plan.data.id,
-//         application_context: {
-//           brand_name: "",
-//           user_action: "SUBSCRIBE_NOW",
-//           return_url: "http://localhost:3000/success",
-//           cancel_url: "http://localhost:3000/cancel",
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const approvalLink = subscription.data.links.find(
-//       (link: { rel: string; }) => link.rel === "approve"
-//     );
-
-//     // res.json({ url: approvalLink.href });
-//     return { url: approvalLink.href }
-//   } catch (err: any) {
-//     // res.status(500).json({ error: err.response?.data || err.message });
-//     // throw new AppError(500, err.response?.data || err.message)
-//     throw new AppError(500,  err?.response?.data || err?.message);
-//   }
-// }
-
-export const paypalSubscription = async (amount: number) => {
+const paypalSubscription = async (amount: number) => {
   const accessToken = await generateAccessToken();
 
   try {
@@ -196,41 +79,6 @@ export const paypalSubscription = async (amount: number) => {
       }
     );
 
-    // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
-    // // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId");
-
-    // if (userData?.paypalSubscriptionId) {
-    //   const existingSubId = userData?.paypalSubscriptionId;
-    //   try {
-    //     // ✅ Cancel the existing subscription
-    //     await axios.post(
-    //       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
-    //       { reason: "User upgraded or changed subscription." },
-    //       {
-    //         headers: {
-    //           Authorization: `Bearer ${accessToken}`,
-    //           "Content-Type": "application/json",
-    //         },
-    //       }
-    //     );
-    //     console.log("✅ Previous subscription canceled:", existingSubId);
-    //   } catch (cancelErr: unknown) {
-    //     const err = cancelErr as AxiosError;
-    //     console.warn("⚠️ Failed to cancel previous subscription:", err.response?.data || err.message);
-    //   }
-    // }
-
-    // await User.findOneAndUpdate(
-    //   { paypalEmail },
-    //   {
-    //     isPro: true,
-    //     paypalSubscriptionId: subscription?.data?.id,
-    //     paypalPlanId: plan?.data?.id,
-    //     subscribedAmount: amount,
-    //   },
-    //   { new: true, runValidators: true }
-    // )
-
     const approvalLink = subscription.data.links.find(
       (link: any) => link.rel === "approve"
     );
@@ -247,6 +95,31 @@ export const paypalSubscription = async (amount: number) => {
   }
 };
 
+
+export const paypalSubscriptionCancel = async (subscriptionId: string) => {
+  const accessToken = await generateAccessToken();
+
+  try {
+    await axios.post(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+      {
+        reason: "User manually cancelled the subscription",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("✅ Subscription cancelled successfully:", subscriptionId);
+    return { success: true };
+  } catch (error: any) {
+    console.error("❌ Error cancelling subscription:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || error.message);
+  }
+};
 
 const createOrderWithPaypal = async (amount: any, selectedData: any) => {
   try {
@@ -315,6 +188,7 @@ const captureOrder = async (orderID: string) => {
 
 
 
+
 const webhookEvent = async (event: any, headers: any) => {
   try {
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
@@ -355,14 +229,12 @@ const webhookEvent = async (event: any, headers: any) => {
 
     console.log("webhook hiiitt");
 
-// ================== when a user purses pack then this this hook
+    // ================== when a user purses pack then this this hook
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
       const purchaseUnit = resource.purchase_units?.[0];
       const selectedDataRaw = purchaseUnit?.custom_id || resource?.custom_id;
-
       let selectedData: any[] = [];
-
       try {
         selectedData = JSON.parse(selectedDataRaw);
       } catch {
@@ -422,22 +294,11 @@ const webhookEvent = async (event: any, headers: any) => {
         };
       });
 
-      console.log("💸 Final Payout List (per producer):", payoutList);
-
-      // await Promise.all(
-      //   payoutList.map((item) =>
-      //     sendPayoutToEmail(item.paypalEmail, item.payoutAmount)
-      //   )
-      // );
-
       await Promise.all(
         payoutList.map(async (item) => {
           try {
             await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
             const user = await User.findById(item.producerId).select("email fullName _id producer_name");
-
-            console.log(439, user);
-
 
             if (user) {
               const transaction = {
@@ -447,8 +308,6 @@ const webhookEvent = async (event: any, headers: any) => {
                 salesAmount: item.payoutAmount,
                 commission: item.platformFee,
               };
-              console.log(447, transaction);
-
               await Transactions.create(transaction);
               console.log("✅ Transaction recorded for:", user.email);
             } else {
@@ -459,11 +318,9 @@ const webhookEvent = async (event: any, headers: any) => {
           }
         })
       );
-
-
     }
 
-// =================== this is subscription hook
+    // =================== this is subscription hook
     if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
       const subscriptionId = event.resource.id;
       const planId = event.resource.plan_id;
@@ -471,16 +328,11 @@ const webhookEvent = async (event: any, headers: any) => {
       const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
       const amount = event.resource.billing_info?.last_payment?.amount?.value;
 
-      console.log("✅ Subscription ID:", subscriptionId);
-      console.log("👤 Customer Name:", name);
-      console.log("📧 Customer  paypal Email:", paypalEmail);
-      console.log("🧾 Plan ID:", planId);
-      console.log("💰 Subscription Amount:", amount);
-
       const subscribedUserData = await User.findOne({ paypalEmail });
       if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
 
       const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
+      // after testing remove this line, ( this api and subscribedUserData this same)
 
       if (userData?.paypalSubscriptionId) {
         const existingSubId = userData?.paypalSubscriptionId;
@@ -524,6 +376,89 @@ const webhookEvent = async (event: any, headers: any) => {
       await Transactions.create(transaction);
     }
 
+    // ===================== auto pay data store 
+    if (event.event_type === "PAYMENT.SALE.COMPLETED") {
+      const amount = event.resource.amount?.total;
+      const billingAgreementId = event.resource.billing_agreement_id;
+
+      const user = await User.findOne({ paypalSubscriptionId: billingAgreementId });
+
+      if (!user) {
+        console.warn("⚠️ No user found for recurring subscription:", billingAgreementId);
+        return;
+      }
+
+      const transaction = {
+        email: user.email,
+        name: user.producer_name,
+        userId: user._id,
+        subscriptionAmount: parseInt(amount),
+        salesAmount: 0,
+        commission: 0,
+      };
+
+      await Transactions.create(transaction);
+      console.log("✅ Monthly subscription payment logged for:", user.email);
+    }
+
+    //============= if any user cancelled his sunscription 
+    if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+      console.log("subscription canselled Hiiiittttt");
+      
+      const subscriptionId = event.resource.id;
+      await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
+        isPro: false,
+        paypalSubscriptionId: null,
+        paypalPlanId: null,
+        subscribedAmount: 0,
+      });
+      console.log("❌ Subscription cancelled:", subscriptionId);
+    }
+
+
+    // =================== subscription canseled or ( amount not available then subscription auto cansel )
+    if (event.event_type === "BILLING.SUBSCRIPTION.SUSPENDED") {
+      const subscriptionId = event.resource.id;
+
+      console.log("🚫 Subscription Suspended (likely due to failed payment):", subscriptionId);
+
+      const user = await User.findOne({ paypalSubscriptionId: subscriptionId });
+
+      if (user) {
+        await User.findByIdAndUpdate(user._id, {
+          isPro: false,
+          paypalSubscriptionId: null,
+          paypalPlanId: null,
+          subscribedAmount: 0,
+        });
+
+        try {
+          await axios.post(
+            `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+            { reason: "Payment failed multiple times" },
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log("✅ Suspended subscription canceled :", subscriptionId);
+        } catch (err: any) {
+          console.error("❌ Failed to cancel suspended subscription:", err.response?.data || err.message);
+        }
+
+
+        console.log("📉 User downgraded due to payment failure:", user.email);
+      } else {
+        console.warn("⚠️ No user found for suspended subscription:", subscriptionId);
+      }
+
+
+
+
+
+    }
 
 
 
@@ -539,6 +474,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
 export const paymentService = {
   paypalSubscription,
+  paypalSubscriptionCancel,
   createOrderWithPaypal,
   captureOrder,
   webhookEvent

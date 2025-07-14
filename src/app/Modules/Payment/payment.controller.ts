@@ -4,8 +4,8 @@ import sendResponse from "../../utils/sendResponse";
 import { paymentService } from "./payment.service";
 
 const paypalSubscription = catchAsync(async (req, res) => {
-  const { amount, paypalEmail } = req.body;
-  const result = await paymentService.paypalSubscription(parseInt(amount), paypalEmail);
+  const { amount } = req.body;
+  const result = await paymentService.paypalSubscription(parseInt(amount));
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -13,6 +13,18 @@ const paypalSubscription = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const paypalSubscriptionCancel = catchAsync(async (req, res) => {
+  const { subscriptionId } = req.params;
+  const result = await paymentService.paypalSubscriptionCancel(subscriptionId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'subscription created (paypal)',
+    data: result,
+  });
+});
+
 
 const createOrderWithPaypal = catchAsync(async (req, res) => {
   const { amount, selectedData } = req.body;
@@ -49,6 +61,7 @@ const webhookEvent = catchAsync(async (req, res) => {
 
 export const paymentController = {
   paypalSubscription,
+  paypalSubscriptionCancel,
   createOrderWithPaypal,
   captureOrder,
   webhookEvent,

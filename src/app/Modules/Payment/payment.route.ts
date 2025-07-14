@@ -10,6 +10,7 @@ const router = express.Router();
 
 // ============== Paypal
 router.post("/paypalSubscription", paymentController.paypalSubscription);
+router.post("/paypalSubscriptionCancel/:subscriptionId", paymentController.paypalSubscriptionCancel);
 router.post("/create-order", paymentController.createOrderWithPaypal);
 router.post("/capture-order/:orderID", paymentController.captureOrder);
 router.post("/webhook", paymentController.webhookEvent);
