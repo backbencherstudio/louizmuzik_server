@@ -126,7 +126,7 @@ import httpStatus from 'http-status';
 //   }
 // }
 
-export const paypalSubscription = async (amount: number, paypalEmail: string) => {
+export const paypalSubscription = async (amount: number) => {
   const accessToken = await generateAccessToken();
 
   try {
@@ -355,7 +355,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
     console.log("webhook hiiitt");
 
-
+// ================== when a user purses pack then this this hook
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
       const purchaseUnit = resource.purchase_units?.[0];
@@ -463,7 +463,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
     }
 
-
+// =================== this is subscription hook
     if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
       const subscriptionId = event.resource.id;
       const planId = event.resource.plan_id;
@@ -522,11 +522,8 @@ const webhookEvent = async (event: any, headers: any) => {
         commission: 0,
       };
       await Transactions.create(transaction);
-
-
-
-      // ➕ Here you can store the data to MongoDB or any DB
     }
+
 
 
 
