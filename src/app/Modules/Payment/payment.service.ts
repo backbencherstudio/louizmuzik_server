@@ -196,40 +196,40 @@ export const paypalSubscription = async (amount: number, paypalEmail: string) =>
       }
     );
 
-    const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
-    // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId");
+    // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
+    // // const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId");
 
-    if (userData?.paypalSubscriptionId) {
-      const existingSubId = userData?.paypalSubscriptionId;
-      try {
-        // ✅ Cancel the existing subscription
-        await axios.post(
-          `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
-          { reason: "User upgraded or changed subscription." },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        console.log("✅ Previous subscription canceled:", existingSubId);
-      } catch (cancelErr: unknown) {
-        const err = cancelErr as AxiosError;
-        console.warn("⚠️ Failed to cancel previous subscription:", err.response?.data || err.message);
-      }
-    }
+    // if (userData?.paypalSubscriptionId) {
+    //   const existingSubId = userData?.paypalSubscriptionId;
+    //   try {
+    //     // ✅ Cancel the existing subscription
+    //     await axios.post(
+    //       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
+    //       { reason: "User upgraded or changed subscription." },
+    //       {
+    //         headers: {
+    //           Authorization: `Bearer ${accessToken}`,
+    //           "Content-Type": "application/json",
+    //         },
+    //       }
+    //     );
+    //     console.log("✅ Previous subscription canceled:", existingSubId);
+    //   } catch (cancelErr: unknown) {
+    //     const err = cancelErr as AxiosError;
+    //     console.warn("⚠️ Failed to cancel previous subscription:", err.response?.data || err.message);
+    //   }
+    // }
 
-    await User.findOneAndUpdate(
-      { paypalEmail },
-      {
-        isPro: true,
-        paypalSubscriptionId: subscription?.data?.id,
-        paypalPlanId: plan?.data?.id,
-        subscribedAmount: amount,
-      },
-      { new: true, runValidators: true }
-    )
+    // await User.findOneAndUpdate(
+    //   { paypalEmail },
+    //   {
+    //     isPro: true,
+    //     paypalSubscriptionId: subscription?.data?.id,
+    //     paypalPlanId: plan?.data?.id,
+    //     subscribedAmount: amount,
+    //   },
+    //   { new: true, runValidators: true }
+    // )
 
     const approvalLink = subscription.data.links.find(
       (link: any) => link.rel === "approve"
@@ -479,6 +479,39 @@ const webhookEvent = async (event: any, headers: any) => {
 
       const subscribedUserData = await User.findOne({ paypalEmail });
       if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
+
+      const userData = await User.findOne({ paypalEmail }).select("paypalSubscriptionId")
+
+      if (userData?.paypalSubscriptionId) {
+        const existingSubId = userData?.paypalSubscriptionId;
+        try {
+          await axios.post(
+            `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${existingSubId}/cancel`,
+            { reason: "User upgraded or changed subscription." },
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log("✅ Previous subscription canceled:", existingSubId);
+        } catch (cancelErr: unknown) {
+          const err = cancelErr as AxiosError;
+          console.warn("⚠️ Failed to cancel previous subscription:", err.response?.data || err.message);
+        }
+      }
+
+      await User.findOneAndUpdate(
+        { email: subscribedUserData.email },
+        {
+          isPro: true,
+          paypalSubscriptionId: subscriptionId,
+          paypalPlanId: planId,
+          subscribedAmount: amount,
+        },
+        { new: true, runValidators: true }
+      )
 
       const transaction = {
         email: subscribedUserData.email,
