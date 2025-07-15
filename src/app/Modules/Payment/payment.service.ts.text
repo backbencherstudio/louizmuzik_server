@@ -97,6 +97,32 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
   }
 };
 
+
+// export const paypalSubscriptionCancel = async (subscriptionId: string) => {
+//   const accessToken = await generateAccessToken();
+
+//   try {
+//     await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
+//       {
+//         reason: "User manually cancelled the subscription",
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+
+//     console.log("✅ Subscription cancelled successfully:", subscriptionId);
+//     return { success: true };
+//   } catch (error: any) {
+//     console.error("❌ Error cancelling subscription:", error.response?.data || error.message);
+//     throw new Error(error.response?.data?.message || error.message);
+//   }
+// };
+
 const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
 
@@ -453,6 +479,20 @@ const webhookEvent = async (event: any, headers: any) => {
       console.log("✅ Monthly subscription payment logged for:", user.email);
     }
 
+    //============= if any user cancelled his sunscription 
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   console.log("subscription canselled Hiiiittttt");
+
+    //   const subscriptionId = event.resource.id;
+    //   await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
+    //     isPro: false,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //   });
+    //   console.log("❌ Subscription cancelled:", subscriptionId);
+    // }
+
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
       const subscriptionId = event.resource.id;
 
@@ -488,6 +528,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
     }
+
 
     // =================== subscription canseled or ( amount not available then subscription auto cansel )
     if (event.event_type === "BILLING.SUBSCRIPTION.SUSPENDED") {
