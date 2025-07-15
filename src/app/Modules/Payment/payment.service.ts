@@ -101,7 +101,6 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
 
   try {
-    // 1️⃣ Get subscription details to extract plan_id
     const subRes = await axios.get(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
       {
@@ -110,9 +109,7 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
         },
       }
     );
-
     const planId = subRes.data.plan_id;
-
     // 2️⃣ Cancel the subscription
     await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/cancel`,
@@ -151,7 +148,6 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
 const createOrderWithPaypal = async (amount: any, selectedData: any) => {
   try {
     const accessToken = await generateAccessToken();
-
     const response = await axios.post(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
@@ -177,7 +173,6 @@ const createOrderWithPaypal = async (amount: any, selectedData: any) => {
     return { id: response.data.id };
   } catch (err: any) {
     const statusCode = err?.response?.status || 500;
-
     // Extract possible PayPal error message
     const paypalError = err?.response?.data;
     const mainMessage = paypalError?.message || err.message || "Unknown PayPal error";
@@ -396,9 +391,6 @@ const webhookEvent = async (event: any, headers: any) => {
             }
           );
 
-
-
-
           console.log("✅ Previous subscription canceled:", existingSubId);
         } catch (cancelErr: unknown) {
           const err = cancelErr as AxiosError;
@@ -455,37 +447,12 @@ const webhookEvent = async (event: any, headers: any) => {
 
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
       const subscriptionId = event.resource.id;
-
-      // const accessToken = await generateAccessToken();
-
-      // Update DB
       await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
         isPro: false,
         paypalSubscriptionId: null,
         paypalPlanId: null,
         subscribedAmount: 0,
       });
-
-      // const subRes = await axios.get(
-      //   `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
-      //   {
-      //     headers: { Authorization: `Bearer ${accessToken}` },
-      //   }
-      // );
-      // const planId = subRes.data.plan_id;
-
-      // // Deactivate Plan
-      // await axios.post(
-      //   `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${planId}/deactivate`,
-      //   {},
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${accessToken}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
     }
 
@@ -541,16 +508,10 @@ const webhookEvent = async (event: any, headers: any) => {
           }
         );
 
-
         console.log("📉 User downgraded due to payment failure:", user.email);
       } else {
         console.warn("⚠️ No user found for suspended subscription:", subscriptionId);
       }
-
-
-
-
-
     }
 
 
@@ -609,19 +570,12 @@ const webhookEvent = async (event: any, headers: any) => {
               },
             }
           );
-
-
         }
 
       }
 
       // Optionally: Send email alert to the user
     }
-
-
-
-
-
 
     return 200;
   } catch (err: any) {
@@ -638,13 +592,3 @@ export const paymentService = {
   captureOrder,
   webhookEvent
 };
-
-
-
-
-
-
-
-
-
-

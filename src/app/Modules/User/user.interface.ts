@@ -31,6 +31,8 @@ export interface TUser {
   paypalEmail?: string;
   paypalSubscriptionId? : string;
   paypalPlanId? : string; 
+  customerId? : string; 
+  subscriptionId? : string; 
   subscribedAmount? : number
 }
 

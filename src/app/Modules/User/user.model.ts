@@ -88,6 +88,8 @@ const userSchema = new Schema<TUser>(
     paypalEmail: { type: String },
     paypalSubscriptionId: { type: String },
     paypalPlanId: { type: String },
+    customerId: { type: String },
+    subscriptionId: { type: String },
     subscribedAmount: { type: Number },
 
   },
