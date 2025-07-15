@@ -1,107 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Stripe from "stripe";
 import { User } from "../User/user.model";
+import { Transactions } from "./payment.module";
+import { AppError } from "../../errors/AppErrors";
+import httpStatus from "http-status";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-// const stripeSubscription = async (req : {body : {customerEmail : string, amount : number}}, res : any) => {
-//     const {customerEmail, amount} = req.body
-//     try {
-//         // Create a customer (you can reuse if needed)
-//         const customer = await stripe.customers.create({
-//             email: customerEmail,
-//         });
-
-//         // Create a product
-//         const product = await stripe.products.create({
-//             name: `Dynamic Plan for ${customerEmail}`,
-//         });
-
-//         // Create price dynamically
-//         const price = await stripe.prices.create({
-//             unit_amount: Math.round(amount * 100), // amount in cents
-//             currency: "usd",
-//             recurring: { interval: "month" },
-//             product: product.id,
-//         });
-
-//         // Create subscription
-//         const subscription = await stripe.subscriptions.create({
-//             customer: customer.id,
-//             items: [{ price: price.id }],
-//             payment_behavior: "default_incomplete",
-//             expand: ["latest_invoice.payment_intent"],
-//         });
-
-//         res.send({
-//             clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-//             subscriptionId: subscription.id,
-//         });
-//     } catch (err : any) {
-//         console.error("Subscription error:", err);
-//         res.status(500).send({ error: err.message });
-//     }
-// }
-
-// const stripeSubscription = async (
-//     req: { body: { customerEmail: string; amount: number } },
-//     res: any
-// ) => {
-
-//     const { customerEmail, amount } = req.body;
-
-
-
-//     try {
-//         // Create a customer
-//         const customer = await stripe.customers.create({
-//             email: customerEmail,
-//         });
-
-//         // Create a product
-//         const product = await stripe.products.create({
-//             name: `Dynamic Plan for ${customerEmail}`,
-//         });
-
-//         // Create a price
-//         const price = await stripe.prices.create({
-//             unit_amount: Math.round(amount * 100),
-//             currency: "usd",
-//             recurring: { interval: "day" },
-//             product: product.id,
-//         });
-
-//         // Create subscription
-//         const subscription = await stripe.subscriptions.create({
-//             customer: customer.id,
-//             items: [{ price: price.id }],
-//             payment_behavior: "default_incomplete",
-//             expand: ["latest_invoice.payment_intent"],
-//         });
-
-//         // Type narrowing and safety check
-//         const invoice = subscription.latest_invoice as Stripe.Invoice;
-//         const clientSecret =
-//             invoice?.payment_intent &&
-//             typeof invoice.payment_intent !== "string" &&
-//             invoice.payment_intent.client_secret;
-
-//         if (!clientSecret) {
-//             throw new Error("Failed to retrieve client secret.");
-//         }
-
-//         res.send({
-//             clientSecret,
-//             subscriptionId: subscription.id,
-//         });
-//     } catch (err: any) {
-//         console.error("Subscription error:", err);
-//         res.status(500).send({ error: err.message });
-//     }
-
-
-// };
 
 const stripeSubscription = async (
     req: { body: { email: string; amount: number; paymentMethodId: string } },
@@ -170,6 +76,10 @@ const stripeSubscription = async (
                 ? latestInvoice.invoice_pdf
                 : null;
 
+        
+        const subscribedUserData = await User.findOne({email})
+        if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
+
         await User.findOneAndUpdate(
             { email },
             {
@@ -177,21 +87,33 @@ const stripeSubscription = async (
                     customerId,
                     subscriptionId: subscription.id,
                     isPro: true,
+                    subscribedAmount: amount
                 },
             },
             { new: true, runValidators: true }
         );
 
+        const transaction = {
+            email: subscribedUserData.email,
+            name: subscribedUserData.producer_name,
+            userId: subscribedUserData._id,
+            subscriptionAmount: amount,
+            salesAmount: 0,
+            commission: 0,
+        };
+        await Transactions.create(transaction);
+
         res.status(200).send({
             subscriptionId: subscription.id,
             clientSecret: (latestInvoice?.payment_intent as Stripe.PaymentIntent)?.client_secret || null,
-            customer_id: customerId,
+            customerId,
         });
     } catch (error: any) {
         console.error("Error creating subscription:", error);
         res.status(500).send({ error: "Failed to create subscription." });
     }
 };
+
 
 
 
