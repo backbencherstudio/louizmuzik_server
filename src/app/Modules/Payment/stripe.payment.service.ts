@@ -160,6 +160,8 @@ const stripeSubscription = async (
 };
 
 
+
+
 const stripeWebhook = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
   const webhookSecret = config.stripe_webhook_secret_key;
@@ -323,7 +325,6 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   //   commission: 0,
   // });
 };
-
 
 
 export const stripeSubscriptionService = {
