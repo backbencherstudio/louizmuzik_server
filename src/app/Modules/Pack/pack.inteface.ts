@@ -12,9 +12,9 @@ export interface IPack {
   price: number;
   description: string;
   genre: string[];
-  waveform: string;
-  bpm: number;
-  key: string;
+  // waveform: string;
+  // bpm?: number;
+  // key?: string;
   favorites: number;
   sales?: number;
   profit?: number;

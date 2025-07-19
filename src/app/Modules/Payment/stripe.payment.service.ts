@@ -10,9 +10,39 @@ import { User } from "../User/user.model";
 import { Transactions } from "./payment.module";
 import config from "../../config";
 import { Request, Response } from "express";
+import nodemailer from "nodemailer";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: config.sender_email,
+    pass: config.email_pass,
+  },
+});
+
+
+const sendEmail = async (
+  to: string,
+  subject: string,
+  text: string,
+  html?: string
+) => {
+  try {
+    await transporter.sendMail({
+      from: config.sender_email,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log(`Email sent to ${to} with subject "${subject}"`);
+  } catch (error) {
+    console.error(`Failed to send email to ${to}:`, error);
+  }
+};
 
 
 const stripeSubscription = async (
@@ -160,6 +190,91 @@ const stripeSubscription = async (
 };
 
 
+const cancelSubscription = async (req: Request, res: Response) => {
+  const { customerId } = req.params;
+
+  try {
+    const user = await User.findOne({ customerId });
+    if (!user || !user.customerId) {
+      return res.status(404).json({ error: "User or subscription not found." });
+    }
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: user.customerId,
+      status: "active",
+    });
+
+    if (subscriptions.data.length === 0) {
+      return res.status(404).json({ error: "No active subscription found." });
+    }
+
+    const subscriptionId = subscriptions.data[0].id;
+
+    const canceledSubscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
+    });
+
+    await User.findByIdAndUpdate({ _id: user._id }, { $set: { cancelRequest: true } }, { new: true, runValidators: true })
+
+    const textContent = `
+      Hello,
+
+      Your subscription has been successfully set to cancel at the end of the current billing period. If you have any questions or wish to resubscribe, please feel free to contact us.
+
+      Thank you for being with us,
+      – The Team
+    `;
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+        <div style="background-color: #f44336; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Subscription Set to Cancel</h1>
+        </div>
+        <div style="padding: 20px;">
+          <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            Hello,
+          </p>
+          <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            Your subscription has been successfully set to <strong>cancel</strong> at the end of the current billing period.
+          </p>
+          <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            If you have any questions or wish to resubscribe in the future, please feel free to contact us at any time.
+          </p>
+          <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+            Thank you for being with us,
+          </p>
+          <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px; font-weight: bold;">
+            – The Team
+          </p>
+        </div>
+        <div style="background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #888888;">
+          <p style="margin: 0;">
+            If you have any questions, feel free to <a href="mailto:rentpadhomesteam@gmail.com" style="color: #0d6efd; text-decoration: none;">contact us</a>.
+          </p>
+          <p style="margin: 10px 0 0;">&copy; ${new Date().getFullYear()} The Team. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+
+    await sendEmail(
+      user.email,
+      "Subscription Set to Cancel",
+      textContent,
+      htmlContent
+    );
+
+    console.log(`Subscription set to cancel at period end for user: ${user.email}`);
+    res.status(200).json({
+      message: "Subscription successfully set to cancel at the end of the current billing period.",
+      subscriptionId: canceledSubscription.id,
+    });
+  } catch (error: any) {
+    console.error("Error canceling subscription:", error);
+    res.status(500).json({ error: "Failed to cancel subscription." });
+  }
+};
+
+
 
 
 const stripeWebhook = async (req: Request, res: Response) => {
@@ -241,11 +356,11 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   const { email, userId } = schedule.metadata || {};
   // console.log(`🗓️ Subscription schedule canceled for ${email}`);
 
-  // await User.findByIdAndUpdate(userId, {
-  //   isPro: false,
-  //   subscriptionStatus: "canceled",
-  //   subscriptionId: null,
-  // });
+  await User.findByIdAndUpdate(userId, {
+    isPro: false,
+    subscriptionId: null,
+    subscribedAmount : 0
+  });
 };
 
 // const handleInvoiceFinalized = async (event: Stripe.Event) => {
@@ -329,6 +444,7 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
 
 export const stripeSubscriptionService = {
     stripeSubscription,
+    cancelSubscription,
     stripeWebhook
 }
 

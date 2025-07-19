@@ -20,7 +20,8 @@ router.post("/webhook", paymentController.webhookEvent);
 
 // ============== stripe
 router.post("/stripeSubscription", stripeSubscriptionService.stripeSubscription)
-router.post("/stripeWebhook", bodyParser.raw({ type: "application/json" }), stripeSubscriptionService.stripeWebhook);;
+router.post("/stripeWebhook", bodyParser.raw({ type: "application/json" }), stripeSubscriptionService.stripeWebhook);
+router.post("/cancel-subscription/:customerId", stripeSubscriptionService.cancelSubscription);
 // ============== stripe
 
 
