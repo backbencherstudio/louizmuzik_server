@@ -35,8 +35,8 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         name: `Subscription for $${amount}`,
         billing_cycles: [
           {
-            // frequency: { interval_unit: "MONTH", interval_count: 1 },
-            frequency: { interval_unit: "DAY", interval_count: 1 },
+            frequency: { interval_unit: "MONTH", interval_count: 1 },
+            // frequency: { interval_unit: "DAY", interval_count: 1 },
             tenure_type: "REGULAR",
             sequence: 1,
             total_cycles: 0,
@@ -101,7 +101,7 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
 
   console.log(103, subscriptionId);
-  
+
 
   try {
     const subRes = await axios.get(
@@ -140,6 +140,24 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
       }
     );
     console.log("🛑 Plan deactivated successfully:", planId);
+
+    const nextBillingTime = subRes.data.billing_info?.next_billing_time;
+    console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+    let endDate: Date | null = null;
+    if (nextBillingTime && !isNaN(Date.parse(nextBillingTime))) {
+      endDate = new Date(nextBillingTime);
+    }
+
+    await User.findOneAndUpdate(
+      { paypalSubscriptionId: subscriptionId },
+      {
+        $set: {
+          subscriptionEndDate: endDate,
+        },
+      },
+      { new: true, runValidators: true }
+    );
 
     return { success: true };
   } catch (error: any) {
@@ -412,6 +430,13 @@ const webhookEvent = async (event: any, headers: any) => {
         { new: true, runValidators: true }
       )
 
+      await User.findOneAndUpdate(
+        { email: subscribedUserData.email },
+        { $unset: { subscriptionEndDate: "" } },
+        { new: true, runValidators: true }
+      );
+
+
       const transaction = {
         email: subscribedUserData.email,
         name: subscribedUserData.producer_name,
@@ -458,6 +483,123 @@ const webhookEvent = async (event: any, headers: any) => {
       });
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
     }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+    //   // const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+
+    //   // await User.findOneAndUpdate(
+    //   //   { paypalSubscriptionId: subscriptionId },
+    //   //   {
+    //   //     isPro: true, // Still true until the end date
+    //   //     subscriptionEndDate: new Date(nextBillingTime), // Save expiry date
+    //   //     paypalSubscriptionId: null,
+    //   //     paypalPlanId: null,
+    //   //     subscribedAmount: 0,
+    //   //   }
+    //   // );
+
+    //   await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     {
+    //       $set: {
+    //         isPro: true,
+    //         subscriptionEndDate: new Date(nextBillingTime),
+    //         paypalSubscriptionId: null,
+    //         paypalPlanId: null,
+    //         subscribedAmount: 0,
+    //       },
+    //     },
+    //     { new: true, runValidators: true }
+    //   );
+
+
+    //   console.log("❌ Subscription cancelled, access remains until:", nextBillingTime);
+    // }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+    //   const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+    //   let endDate: Date | null = null;
+    //   if (nextBillingTime && !isNaN(Date.parse(nextBillingTime))) {
+    //     endDate = new Date(nextBillingTime);
+    //   } else {
+    //     console.warn("⚠️ nextBillingTime is invalid or missing:", nextBillingTime);
+    //   }
+
+    //   const updateData: Partial<TUser> = {
+    //     isPro: true,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //   };
+
+    //   if (endDate) {
+    //     updateData.subscriptionEndDate = endDate;
+    //   }
+
+    //   await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     { $set: updateData },
+    //     { new: true, runValidators: true }
+    //   );
+
+    //   console.log("❌ Subscription cancelled, access remains until:", endDate);
+    // }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+
+    //   // Try to extract next_billing_time or use fallback
+    //   let nextBillingTime: string | undefined = event.resource.billing_info?.next_billing_time;
+
+    //   if (!nextBillingTime) {
+    //     // Fallback to last payment time (optional)
+    //     nextBillingTime = event.resource.billing_info?.last_payment?.time;
+    //     console.warn("⚠️ Using last payment time as fallback:", nextBillingTime);
+    //   }
+
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+    //   let endDate: Date | null = null;
+    //   if (nextBillingTime && !isNaN(Date.parse(nextBillingTime))) {
+    //     endDate = new Date(nextBillingTime);
+    //   } else {
+    //     console.warn("⚠️ nextBillingTime is invalid or missing:", nextBillingTime);
+    //     endDate = new Date(); // fallback to now
+    //   }
+
+    //   // Prepare update data
+    //   const updateData: Partial<TUser> = {
+    //     isPro: true,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //     subscriptionEndDate: endDate,
+    //   };
+
+    //   // Run the update
+    //   const updatedUser = await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     { $set: updateData },
+    //     { new: true, runValidators: true }
+    //   );
+
+    //   if (updatedUser) {
+    //     console.log("✅ User updated after cancellation:", updatedUser.email);
+    //   } else {
+    //     console.error("❌ No user found with subscriptionId:", subscriptionId);
+    //   }
+
+    //   console.log("❌ Subscription cancelled, access remains until:", endDate);
+    // }
+
+
 
     // =================== subscription canseled or ( amount not available then subscription auto cansel )
     if (event.event_type === "BILLING.SUBSCRIPTION.SUSPENDED") {

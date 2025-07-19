@@ -91,6 +91,7 @@ const userSchema = new Schema<TUser>(
     customerId: { type: String },
     subscriptionId: { type: String },
     subscribedAmount: { type: Number },
+    subscriptionEndDate: { type: Date },
 
   },
   {

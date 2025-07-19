@@ -29,11 +29,12 @@ export interface TUser {
   paypalAccountId?: string; //========== neeed to remove it 
   accessToken?: string;  //========== neeed to remove it 
   paypalEmail?: string;
-  paypalSubscriptionId? : string;
-  paypalPlanId? : string; 
+  paypalSubscriptionId? : string | null;
+  paypalPlanId? : string | null; 
   customerId? : string; 
   subscriptionId? : string; 
-  subscribedAmount? : number
+  subscribedAmount? : number;
+  subscriptionEndDate? : Date;
 }
 
 // ======================================>>>>>>>> Login Interface
