@@ -100,6 +100,9 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
 const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
 
+  console.log(103, subscriptionId);
+  
+
   try {
     const subRes = await axios.get(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,

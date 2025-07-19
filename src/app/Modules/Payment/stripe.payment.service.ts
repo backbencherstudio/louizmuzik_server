@@ -161,43 +161,44 @@ const stripeSubscription = async (
 
 
 const stripeWebhook = async (req: Request, res: Response) => {
-  const webhookSecret = config.stripe_webhook_secret_key as string;
-  const signature = req.headers["stripe-signature"];
-
+  const sig = req.headers["stripe-signature"];
+  const webhookSecret = config.stripe_webhook_secret_key;
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, signature!, webhookSecret);
-  } catch (err) {
-    console.error(`Webhook signature verification failed: ${err}`);
-    return res.status(400).send(`Webhook signature verification failed.`);
+    event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret as string);
+  } catch (err: any) {
+    console.error("❌ Webhook verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  const eventHandlers: { [key: string]: (data: any) => Promise<void> } = {
-  "customer.subscription.created": handleSubscriptionUpdated,      // new subscription created
-  "customer.subscription.updated": handleSubscriptionUpdated,      // subscription updated (status, plan, etc)
-  "customer.subscription.deleted": handleSubscriptionDeleted,      // subscription deleted/canceled
-  "invoice.payment_succeeded": handleInvoicePaymentSucceeded,      // payment success for subscription invoice
-  "invoice.payment_failed": handlePaymentFailed,                    // payment failed for subscription invoice
-  "invoice.upcoming": handleInvoiceUpcoming,                        // upcoming invoice notification
-  "subscription_schedule.canceled": handleSubscriptionCanceled,    // schedule canceled (if using schedules)
-  "invoice.finalized": handleInvoiceFinalized,                      // invoice finalized event (optional)
-};
+  const eventHandlers: { [key: string]: (event: Stripe.Event) => Promise<void> } = {
+    "customer.subscription.created": handleSubscriptionUpdated,
+    "customer.subscription.updated": handleSubscriptionUpdated,
+    "customer.subscription.deleted": handleSubscriptionDeleted,
+    "invoice.payment_succeeded": handleInvoicePaymentSucceeded,
+    "invoice.payment_failed": handlePaymentFailed,
+    "invoice.upcoming": handleInvoiceUpcoming,
+    "subscription_schedule.canceled": handleSubscriptionCanceled,
+    "invoice.finalized": handleInvoiceFinalized,
+  };
 
   const handler = eventHandlers[event.type];
   if (handler) {
     try {
-      await handler(event.data.object);
+      await handler(event);
     } catch (err) {
-      console.error(`Error handling event ${event.type}:`, err);
-      return res.status(500).send(`Error handling event.`);
+      console.error(`❌ Error handling ${event.type}:`, err);
+      return res.status(500).send("Webhook handler error");
     }
   } else {
-    console.log(`Unhandled event type: ${event.type}`);
+    console.log(`⚠️ Unhandled event: ${event.type}`);
   }
-  res.status(200).send({ received: true });
+
+  res.status(200).json({ received: true });
 };
+
 
 
 const handleInvoiceUpcoming = async (event: Stripe.Event) => {
@@ -213,20 +214,25 @@ const handlePaymentFailed = async (event: Stripe.Event) => {
 };
 
 const handleSubscriptionUpdated = async (event: Stripe.Event) => {
-  const subscription = event?.data?.object as Stripe.Subscription;
+  const subscription = event.data.object as Stripe.Subscription;
+
   const { email, userId, amount } = subscription?.metadata || {};
-  console.log(`🔄 Subscription updated for ${email} `);
-  console.log(userId);
-  console.log(amount);
-  
 
-  // console.log(`🔄 Subscription updated for ${email} → status: ${subscription.status}`);
+  console.log("🔄 Subscription updated:");
+  console.log("Email:", email);
+  console.log("User ID:", userId);
+  console.log("Amount:", amount);
 
-  // await User.findByIdAndUpdate(userId, {
-  //   isPro: subscription.status === "active",
-  //   subscribedAmount: amount,
-  // });
+  // Example update logic
+  // if (email && userId) {
+  //   await User.findByIdAndUpdate(userId, {
+  //     isPro: subscription.status === "active",
+  //     subscribedAmount: parseFloat(amount),
+  //   });
+  // }
 };
+
+
 
 const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   const schedule = event?.data?.object as Stripe.SubscriptionSchedule;
@@ -268,11 +274,41 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   // });
 };
 
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+//   const { email, name, userId, amount } = invoice?.metadata || {};
+//   console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
+
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: parseFloat(amount),
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: parseFloat(amount),
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+// };
+
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   const invoice = event?.data?.object as Stripe.Invoice;
-  const { email, name, userId, amount } = invoice?.metadata || {};
+
+  const email =
+    invoice?.metadata?.email ||
+    invoice?.customer_email ||
+    "unknown@email.com";
+
+  const name = invoice?.metadata?.name || "unknown";
+  const userId = invoice?.metadata?.userId || "unknown";
+  const amount = invoice?.metadata?.amount || (invoice?.amount_paid / 100);
+
   console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
 
+  // Optional: Save to DB
   // await User.findByIdAndUpdate(userId, {
   //   isPro: true,
   //   subscribedAmount: parseFloat(amount),

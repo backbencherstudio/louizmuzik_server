@@ -20,7 +20,7 @@ const paypalSubscriptionCancel = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'subscription created (paypal)',
+    message: 'subscription cancel (paypal)',
     data: result,
   });
 });
