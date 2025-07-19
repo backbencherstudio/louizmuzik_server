@@ -25,10 +25,33 @@ const getAllPackFromDB = async () => {
     return result
 }
 
+// const createPackIntoDB = async (payload: IPack) => {
+//     const result = await Pack.create(payload)
+//     return result
+// }
+
 const createPackIntoDB = async (payload: IPack) => {
-    const result = await Pack.create(payload)
-    return result
-}
+  const parsedPayload = { ...payload };
+
+  // Handle genre stringified array
+  if (typeof parsedPayload.genre === "string") {
+    try {
+      parsedPayload.genre = JSON.parse(parsedPayload.genre);
+    } catch (error) {
+      throw new Error("Invalid genre format. It must be a JSON array string.");
+    }
+  }
+
+  // Ensure it's an array of strings
+  if (!Array.isArray(parsedPayload.genre)) {
+    throw new Error("Genre must be an array.");
+  }
+
+  const result = await Pack.create(parsedPayload);
+  return result;
+};
+
+
 
 const updatePackIntoDB = async (packId: string, payload: Partial<IPack>) => {
     const result = await Pack.findByIdAndUpdate({ _id: packId }, payload, { runValidators: true, new: true });
