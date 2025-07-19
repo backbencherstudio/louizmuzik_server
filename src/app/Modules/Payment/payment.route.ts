@@ -5,6 +5,7 @@
 import express from 'express';
 import { paymentController } from './payment.controller';
 import { stripeSubscriptionService } from './stripe.payment.service';
+import bodyParser from "body-parser";
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.post("/webhook", paymentController.webhookEvent);
 
 // ============== stripe
 router.post("/stripeSubscription", stripeSubscriptionService.stripeSubscription)
+router.post("/stripeWebhook", bodyParser.raw({ type: "application/json" }), stripeSubscriptionService.stripeWebhook);;
 // ============== stripe
 
 
