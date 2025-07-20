@@ -359,7 +359,7 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   await User.findByIdAndUpdate(userId, {
     isPro: false,
     subscriptionId: null,
-    subscribedAmount : 0
+    subscribedAmount: 0
   });
 };
 
@@ -411,40 +411,66 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 //   // });
 // };
 
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+
+//   const email =
+//     invoice?.metadata?.email ||
+//     invoice?.customer_email ||
+//     "unknown@email.com";
+
+//   const name = invoice?.metadata?.name || "unknown";
+//   const userId = invoice?.metadata?.userId || "unknown";
+//   const amount = invoice?.metadata?.amount || (invoice?.amount_paid / 100);
+
+//   console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
+
+//   // Optional: Save to DB
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: parseFloat(amount),
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: parseFloat(amount),
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+// };
+
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   const invoice = event?.data?.object as Stripe.Invoice;
 
-  const email =
-    invoice?.metadata?.email ||
-    invoice?.customer_email ||
-    "unknown@email.com";
+  const email = invoice?.metadata?.email || invoice?.customer_email || "unknown@email.com";
+  const name = invoice?.metadata?.name || "Unknown";
+  const userId = invoice?.metadata?.userId || "UnknownUser";
+  const amount =
+    invoice?.metadata?.amount || (invoice?.amount_paid ? invoice?.amount_paid / 100 : 0);
 
-  const name = invoice?.metadata?.name || "unknown";
-  const userId = invoice?.metadata?.userId || "unknown";
-  const amount = invoice?.metadata?.amount || (invoice?.amount_paid / 100);
+  console.log(`💰 Payment succeeded for ${name} (${email}) | UserID: ${userId} | Amount: $${amount}`);
 
-  console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
+    await User.findByIdAndUpdate(userId, {
+      isPro: true,
+      subscribedAmount: amount,
+    });
 
-  // Optional: Save to DB
-  // await User.findByIdAndUpdate(userId, {
-  //   isPro: true,
-  //   subscribedAmount: parseFloat(amount),
-  // });
-
-  // await Transactions.create({
-  //   email,
-  //   name,
-  //   userId,
-  //   subscriptionAmount: parseFloat(amount),
-  //   salesAmount: 0,
-  //   commission: 0,
-  // });
+    await Transactions.create({
+      email,
+      name,
+      userId,
+      subscriptionAmount: amount,
+      salesAmount: 0,
+      commission: 0,
+    });
 };
 
 
 export const stripeSubscriptionService = {
-    stripeSubscription,
-    cancelSubscription,
-    stripeWebhook
+  stripeSubscription,
+  cancelSubscription,
+  stripeWebhook
 }
 
