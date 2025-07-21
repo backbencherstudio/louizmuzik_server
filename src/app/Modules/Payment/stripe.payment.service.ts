@@ -169,14 +169,14 @@ const stripeSubscription = async (
     );
 
     // ✅ Save transaction record
-    await Transactions.create({
-      email: user.email,
-      name: user.producer_name,
-      userId: user._id,
-      subscriptionAmount: amount,
-      salesAmount: 0,
-      commission: 0,
-    });
+    // await Transactions.create({
+    //   email: user.email,
+    //   name: user.producer_name,
+    //   userId: user._id,
+    //   subscriptionAmount: amount,
+    //   salesAmount: 0,
+    //   commission: 0,
+    // });
 
     return res.status(200).send({
       subscriptionId: subscription.id,
@@ -325,9 +325,12 @@ const handleInvoiceUpcoming = async (event: Stripe.Event) => {
 };
 
 const handlePaymentFailed = async (event: Stripe.Event) => {
+
   const invoice = event?.data?.object as Stripe.Invoice;
   const { email } = invoice?.metadata || {};
   console.log(`❌ Payment failed for ${email}`);
+
+
 };
 
 const handleSubscriptionUpdated = async (event: Stripe.Event) => {
@@ -352,11 +355,17 @@ const handleSubscriptionUpdated = async (event: Stripe.Event) => {
 
 
 const handleSubscriptionCanceled = async (event: Stripe.Event) => {
-  const schedule = event?.data?.object as Stripe.SubscriptionSchedule;
-  const { email, userId } = schedule.metadata || {};
-  // console.log(`🗓️ Subscription schedule canceled for ${email}`);
+ const subscription = event?.data?.object as Stripe.Subscription;
+  const customerId = subscription?.customer as string;
+  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+  const metadata = customer.metadata || {};
 
-  await User.findByIdAndUpdate(userId, {
+  const userId = metadata?.userId || 'N/A';
+
+  console.log("schedule cancel === ", userId);
+  
+
+  await User.findByIdAndUpdate({_id : userId}, {
     isPro: false,
     subscriptionId: null,
     subscribedAmount: 0
@@ -380,15 +389,29 @@ const handleInvoiceFinalized = async (event: Stripe.Event) => {
 
 
 const handleSubscriptionDeleted = async (event: Stripe.Event) => {
-  const subscription = event?.data?.object as Stripe.Subscription;
-  const { email, userId } = subscription?.metadata || {};
-  console.log(`🗑️ Subscription deleted for ${email}`);
+  const subscription = event.data.object as Stripe.Subscription;
+  const customerId = subscription.customer as string;
+  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+  const metadata = customer.metadata || {};
+
+  const email = metadata.email || 'N/A';
+  const name = metadata.name || 'N/A';
+  const userId = metadata.userId || 'N/A';
+  const amount = metadata.amount || '0';
+
+
+  console.log("delete subsctiption", email);
+  
+
+
 
   // await User.findByIdAndUpdate(userId, {
   //   isPro: false,
   //   subscriptionId: null,
   //   // subscriptionStatus: "deleted",
   // });
+
+
 };
 
 // const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
@@ -441,20 +464,64 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 //   // });
 // };
 
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+
+//   console.log(447, invoice?.metadata);
+
+
+//   const email = invoice?.metadata?.email || invoice?.customer_email || "unknown@email.com";
+//   const name = invoice?.metadata?.name || "Unknown";
+//   const userId = invoice?.metadata?.userId || "UnknownUser";
+//   const amount =
+//     invoice?.metadata?.amount || (invoice?.amount_paid ? invoice?.amount_paid / 100 : 0);
+
+//   console.log(`💰 Payment succeeded for ${name} (${email}) | UserID: ${userId} | Amount: $${amount}`);
+
+//   console.log({ email });   // email send korar jonno eitai hobe baki data lagbe na 
+//   console.log({ name });
+//   console.log({ userId });
+//   console.log({ amount });
+
+
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: amount,
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: amount,
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+
+// };
+
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
-  const invoice = event?.data?.object as Stripe.Invoice;
+  const subscription = event.data.object as Stripe.Subscription;
+  const customerId = subscription.customer as string;
+  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+  const metadata = customer.metadata || {};
 
-  const email = invoice?.metadata?.email || invoice?.customer_email || "unknown@email.com";
-  const name = invoice?.metadata?.name || "Unknown";
-  const userId = invoice?.metadata?.userId || "UnknownUser";
-  const amount =
-    invoice?.metadata?.amount || (invoice?.amount_paid ? invoice?.amount_paid / 100 : 0);
+  const email = metadata.email || 'N/A';
+  const name = metadata.name || 'N/A';
+  const userId = metadata.userId || 'N/A';
+  const amount = metadata.amount || '0';
 
-  console.log(`💰 Payment succeeded for ${name} (${email}) | UserID: ${userId} | Amount: $${amount}`);
+  console.log("🔄 Subscription updated:");
+  console.log("Name:", name);
+  console.log("Email:", email);
+  console.log("User ID:", userId);
+  console.log("Amount:", amount);
+
+  if (userId !== 'N/A') {
 
     await User.findByIdAndUpdate(userId, {
-      isPro: true,
-      subscribedAmount: amount,
+      isPro: subscription.status === "active",
+      subscribedAmount: parseFloat(amount),
     });
 
     await Transactions.create({
@@ -465,6 +532,12 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
       salesAmount: 0,
       commission: 0,
     });
+
+
+  }
+
+
+
 };
 
 
