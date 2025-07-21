@@ -6,7 +6,7 @@ export interface Tmelody {
   name: string;
   image: string;
   producer: string;
-  waveform: string;
+  // waveform: string;
   bpm: number;
   key: string;
   genre: string;

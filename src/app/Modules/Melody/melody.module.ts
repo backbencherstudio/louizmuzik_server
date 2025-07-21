@@ -8,7 +8,7 @@ const MelodySchema = new Schema<Tmelody>(
     image: { type: String, required: [true, 'Image URL is required'] },
     audioUrl: { type: String, required: [true, 'Audio URL is required'] },
     producer: { type: String, required: [true, 'Producer name is required'] },
-    waveform: { type: String, required: [true, 'Waveform data is required'] },
+    // waveform: { type: String, required: [true, 'Waveform data is required'] },
     bpm: { type: Number, required: [true, 'BPM is required'] },
     key: { type: String, required: [true, 'Key is required'] },
     genre: { type: String, required: [true, 'Genre is required'] },
