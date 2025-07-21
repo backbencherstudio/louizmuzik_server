@@ -24,7 +24,23 @@ const getAllMelodyes = async () => {
 }
 
 const melodyCreateByProducer = async (payload: Tmelody) => {
-  const result = await Melody.create(payload)
+  const parsedPayload = { ...payload };
+
+  // Handle genre stringified array
+  if (typeof parsedPayload.genre === "string") {
+    try {
+      parsedPayload.genre = JSON.parse(parsedPayload.genre);
+    } catch (error) {
+      throw new Error("Invalid genre format. It must be a JSON array string.");
+    }
+  }
+
+  // Ensure it's an array of strings
+  if (!Array.isArray(parsedPayload.genre)) {
+    throw new Error("Genre must be an array.");
+  }
+
+  const result = await Melody.create(parsedPayload)
 
   if (result) {
     await User.findByIdAndUpdate(
@@ -37,8 +53,29 @@ const melodyCreateByProducer = async (payload: Tmelody) => {
 }
 
 const melodyUpdateByProducer = async (melodyId: string, payload: Partial<Tmelody>) => {
-  const result = await Melody.findByIdAndUpdate({ _id: melodyId }, payload, { runValidators: true, new: true })
+  const parsedPayload = { ...payload };
+
+  if (parsedPayload.genre !== undefined) {
+    if (typeof parsedPayload.genre === "string") {
+      try {
+        parsedPayload.genre = JSON.parse(parsedPayload.genre);
+      } catch (error) {
+        throw new Error("Invalid genre format. It must be a JSON array string.");
+      }
+    }
+
+    if (!Array.isArray(parsedPayload.genre)) {
+      throw new Error("Genre must be an array.");
+    }
+  }
+
+  const result = await Melody.findByIdAndUpdate(
+    { _id: melodyId },
+    parsedPayload,
+    { runValidators: true, new: true }
+  )
   return result
+
 }
 
 const getAllMelodesEachProducer = async (userId: string) => {

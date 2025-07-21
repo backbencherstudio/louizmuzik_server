@@ -9,7 +9,8 @@ export interface Tmelody {
   // waveform: string;
   bpm: number;
   key: string;
-  genre: string;
+  // genre: string;
+  genre: string[];
   artistType: string;
   splitPercentage: number;
   audioUrl: string;
