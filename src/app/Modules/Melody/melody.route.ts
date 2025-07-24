@@ -48,6 +48,11 @@ router.patch(
   melodyController.melodyPlay
 );
 
+router.get(
+  '/single-melody/:melodyId',
+  melodyController.getSingleMelodyData
+);
+
 
 
 export const MelodyRouter = router;

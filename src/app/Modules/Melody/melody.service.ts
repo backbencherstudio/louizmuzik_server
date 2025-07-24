@@ -228,6 +228,12 @@ const melodyPlay = async (id: string) => {
 }
 
 
+const getSingleMelodyData = async (melodyId : string) =>{
+  const result = await Melody.findById({_id : melodyId})
+  return result
+}
+
+
 export const melodyService = {
   getAllMelodyes,
   melodyCreateByProducer,
@@ -236,5 +242,6 @@ export const melodyService = {
   deleteMelodesEachProducer,
   selectFavoriteMelody,
   eachMelodyDownloadCounter,
-  melodyPlay
+  melodyPlay,
+  getSingleMelodyData
 }

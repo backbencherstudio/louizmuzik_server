@@ -353,6 +353,17 @@ const melodyPlay = catchAsync(async (req, res) => {
     });
 });
 
+const getSingleMelodyData = catchAsync(async (req, res) => {
+    const melodyId = req.params.melodyId
+    const result = await melodyService.getSingleMelodyData(melodyId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Single melody get successfully',
+        data: result,
+    });
+});
+
 
 
 export const melodyController = {
@@ -363,5 +374,6 @@ export const melodyController = {
     deleteMelodesEachProducer,
     selectFavoriteMelody,
     eachMelodyDownloadCounter,
-    melodyPlay
+    melodyPlay,
+    getSingleMelodyData
 }
