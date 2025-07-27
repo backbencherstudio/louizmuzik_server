@@ -13,7 +13,7 @@ const MelodySchema = new Schema<Tmelody>(
     key: { type: String, required: [true, 'Key is required'] },
     // genre: { type: String, required: [true, 'Genre is required'] },
     genre: { type: [String], required: true },
-    artistType: { type: String, required: [true, 'Artist type is required'] },
+    artistType: { type: [String], required: [true, 'Artist type is required'] },
     splitPercentage: { type: Number, required: [true, 'Split percentage is required'] },
     plays: { type: Number, default: 0 },
     downloads: { type: Number, default: 0 },

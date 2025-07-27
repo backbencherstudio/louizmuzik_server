@@ -35,9 +35,20 @@ const melodyCreateByProducer = async (payload: Tmelody) => {
     }
   }
 
+  if (typeof parsedPayload.artistType === "string") {
+    try {
+      parsedPayload.artistType = JSON.parse(parsedPayload.artistType);
+    } catch (error) {
+      throw new Error("Invalid genre format. It must be a JSON array string.");
+    }
+  }
+
   // Ensure it's an array of strings
   if (!Array.isArray(parsedPayload.genre)) {
     throw new Error("Genre must be an array.");
+  }
+  if (!Array.isArray(parsedPayload.artistType)) {
+    throw new Error("artistType must be an array.");
   }
 
   const result = await Melody.create(parsedPayload)

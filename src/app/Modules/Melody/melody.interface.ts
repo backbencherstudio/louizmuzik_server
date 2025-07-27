@@ -11,7 +11,7 @@ export interface Tmelody {
   key: string;
   // genre: string;
   genre: string[];
-  artistType: string;
+  artistType: string[];
   splitPercentage: number;
   audioUrl: string;
   plays?: number;
