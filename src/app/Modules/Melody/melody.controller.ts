@@ -342,6 +342,17 @@ const eachMelodyDownloadCounter = catchAsync(async (req, res) => {
     });
 });
 
+const melodyDownloadCounterForEachProducer = catchAsync(async (req, res) => {
+    const producerId = req.params.producerId
+    const result = await melodyService.melodyDownloadCounterForEachProducer(producerId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Daily Melody download status',
+        data: result,
+    });
+});
+
 const melodyPlay = catchAsync(async (req, res) => {
     const melodyId = req.params.melodyId
     await melodyService.melodyPlay(melodyId);
@@ -374,6 +385,7 @@ export const melodyController = {
     deleteMelodesEachProducer,
     selectFavoriteMelody,
     eachMelodyDownloadCounter,
+    melodyDownloadCounterForEachProducer,
     melodyPlay,
     getSingleMelodyData
 }

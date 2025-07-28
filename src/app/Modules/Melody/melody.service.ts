@@ -234,13 +234,18 @@ const eachMelodyDownloadCounter = async (id: string) => {
   return melody;
 };
 
+const melodyDownloadCounterForEachProducer = async (producerId: string) => {
+  const result = await DailyMelodyDownloadStats.find({ producerId }).sort({ createdAt: -1 });
+  return result
+}
+
 const melodyPlay = async (id: string) => {
   await Melody.findByIdAndUpdate({ _id: id }, { $inc: { plays: 1 } }, { new: true, runValidators: true })
 }
 
 
-const getSingleMelodyData = async (melodyId : string) =>{
-  const result = await Melody.findById({_id : melodyId})
+const getSingleMelodyData = async (melodyId: string) => {
+  const result = await Melody.findById({ _id: melodyId })
   return result
 }
 
@@ -253,6 +258,7 @@ export const melodyService = {
   deleteMelodesEachProducer,
   selectFavoriteMelody,
   eachMelodyDownloadCounter,
+  melodyDownloadCounterForEachProducer,
   melodyPlay,
   getSingleMelodyData
 }

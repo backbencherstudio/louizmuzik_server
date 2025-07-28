@@ -43,6 +43,11 @@ router.patch(
   melodyController.eachMelodyDownloadCounter
 );
 
+router.get(
+  '/melodyDownloadCounterForEachProducer/:producerId',
+  melodyController.melodyDownloadCounterForEachProducer
+);
+
 router.patch(
   '/melodyPlay/:melodyId',
   melodyController.melodyPlay
