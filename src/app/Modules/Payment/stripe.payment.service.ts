@@ -294,7 +294,7 @@ const stripeWebhook = async (req: Request, res: Response) => {
     "customer.subscription.created": handleSubscriptionUpdated,
     "customer.subscription.updated": handleSubscriptionUpdated,
     "customer.subscription.deleted": handleSubscriptionDeleted,
-    "invoice.payment_succeeded": handleInvoicePaymentSucceeded,
+    "invoice.payment_succeeded": handleInvoicePaymentSucceeded, // Triggered when renewal is successful
     "invoice.payment_failed": handlePaymentFailed,
     "invoice.upcoming": handleInvoiceUpcoming,
     "subscription_schedule.canceled": handleSubscriptionCanceled,
@@ -329,6 +329,12 @@ const handlePaymentFailed = async (event: Stripe.Event) => {
   const invoice = event?.data?.object as Stripe.Invoice;
   const { email } = invoice?.metadata || {};
   console.log(`❌ Payment failed for ${email}`);
+
+  if (email) {
+    await User.findOneAndUpdate({email}, {
+      isPro: false,
+    });
+  }
 
 
 };
