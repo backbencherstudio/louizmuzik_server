@@ -73,6 +73,7 @@ const userSchema = new Schema<TUser>(
     },
     profile_image: { type: String, default: '' },
     isPro: { type: Boolean, default: false },
+    hasUsedTrial: { type: Boolean, default: false },
     followersCounter: { type: Number, default: 0 },
     melodiesCounter: { type: Number, default: 0 },
     about: { type: String, default: '' },

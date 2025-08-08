@@ -16,6 +16,7 @@ export interface TUser {
   expiresAt: Date;
   profile_image: string;
   isPro: boolean;
+  hasUsedTrial: boolean;
   melodiesCounter: number;
   about: string;
   followersCounter: number;
