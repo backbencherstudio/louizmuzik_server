@@ -15,6 +15,7 @@ import { paymentSucceededEmail } from "../../utils/paymentSucceededEmail";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -44,6 +45,7 @@ const sendEmail = async (
   }
 };
 
+
 const stripeSubscription = async (
   req: {
     body: {
@@ -57,11 +59,16 @@ const stripeSubscription = async (
   res: any
 ) => {
   const { email, amount, paymentMethodId, name, userId } = req.body;
+
+  console.log(63, {body : req.body});
+  
+
   if (!email || !amount || !paymentMethodId) {
     return res.status(400).send({
       error: "Email, amount, and payment method are required.",
     });
   }
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -164,6 +171,17 @@ const stripeSubscription = async (
       },
       { new: true, runValidators: true }
     );
+
+    // ✅ Save transaction record
+    // await Transactions.create({
+    //   email: user.email,
+    //   name: user.producer_name,
+    //   userId: user._id,
+    //   subscriptionAmount: amount,
+    //   salesAmount: 0,
+    //   commission: 0,
+    // });
+
     return res.status(200).send({
       subscriptionId: subscription.id,
       clientSecret: paymentIntent?.client_secret || null,
@@ -259,6 +277,8 @@ const cancelSubscription = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to cancel subscription." });
   }
 };
+
+
 
 
 const stripeWebhook = async (req: Request, res: Response) => {
@@ -392,6 +412,9 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 
   console.log("delete subsctiption", email);
 
+
+
+
   // await User.findByIdAndUpdate(userId, {
   //   isPro: false,
   //   subscriptionId: null,
@@ -401,6 +424,91 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 
 };
 
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+//   const { email, name, userId, amount } = invoice?.metadata || {};
+//   console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
+
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: parseFloat(amount),
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: parseFloat(amount),
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+// };
+
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+
+//   const email =
+//     invoice?.metadata?.email ||
+//     invoice?.customer_email ||
+//     "unknown@email.com";
+
+//   const name = invoice?.metadata?.name || "unknown";
+//   const userId = invoice?.metadata?.userId || "unknown";
+//   const amount = invoice?.metadata?.amount || (invoice?.amount_paid / 100);
+
+//   console.log(`💰 Payment succeeded for ${email}, amount: ${amount}`);
+
+//   // Optional: Save to DB
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: parseFloat(amount),
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: parseFloat(amount),
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+// };
+
+// const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+//   const invoice = event?.data?.object as Stripe.Invoice;
+
+//   console.log(447, invoice?.metadata);
+
+
+//   const email = invoice?.metadata?.email || invoice?.customer_email || "unknown@email.com";
+//   const name = invoice?.metadata?.name || "Unknown";
+//   const userId = invoice?.metadata?.userId || "UnknownUser";
+//   const amount =
+//     invoice?.metadata?.amount || (invoice?.amount_paid ? invoice?.amount_paid / 100 : 0);
+
+//   console.log(`💰 Payment succeeded for ${name} (${email}) | UserID: ${userId} | Amount: $${amount}`);
+
+//   console.log({ email });   // email send korar jonno eitai hobe baki data lagbe na 
+//   console.log({ name });
+//   console.log({ userId });
+//   console.log({ amount });
+
+
+//   // await User.findByIdAndUpdate(userId, {
+//   //   isPro: true,
+//   //   subscribedAmount: amount,
+//   // });
+
+//   // await Transactions.create({
+//   //   email,
+//   //   name,
+//   //   userId,
+//   //   subscriptionAmount: amount,
+//   //   salesAmount: 0,
+//   //   commission: 0,
+//   // });
+
+// };
 
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice;
@@ -408,13 +516,19 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   const customerId = subscription.customer as string;
   const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
   const metadata = customer.metadata || {};
-  const invoiceURL = invoice.invoice_pdf || 'N/A';
-  const invoiceId = invoice.id;
+  const invoicePdfUrl = invoice.invoice_pdf || 'N/A';
 
   const email = metadata.email || 'N/A';
   const name = metadata.name || 'N/A';
   const userId = metadata.userId || 'N/A';
   const amount = metadata.amount || '0';
+
+  // console.log("🔄 Subscription updated:");
+  // console.log("Name:", name);
+  // console.log("Email:", email);
+  // console.log("User ID:", userId);
+  // console.log("Amount:", amount);
+  // console.log("invoicePdfUrl:", invoicePdfUrl);
 
   if (userId !== 'N/A') {
 
@@ -423,21 +537,27 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
       subscribedAmount: parseFloat(amount),
     });
 
-    if (invoiceURL && invoiceId) {      
-      await Transactions.create({
-        invoiceId,
-        email,
-        name,
-        userId,
-        subscriptionAmount: amount,
-        salesAmount: 0,
-        commission: 0,
-        invoiceURL
-      });
-    }
+    const res = await Transactions.create({
+      email,
+      name,
+      userId,
+      subscriptionAmount: amount,
+      salesAmount: 0,
+      commission: 0,
+    });
 
-    await paymentSucceededEmail(email, invoiceURL)
+    console.log({res});
+    
+
+    await paymentSucceededEmail(email, invoicePdfUrl)
+
+
+
+
+
+
   }
+
 
 
 };

@@ -9,6 +9,16 @@ const TransactionsSchema = new Schema<ITransactions>(
         commission: { type: Number },
         subscriptionAmount: { type: Number },
         salesAmount: { type: Number },
+        invoiceId: {
+            type: String,
+            unique: true,
+            required: true,
+        },
+        invoiceURL: {
+            type: String,
+            unique: true,
+            required: true,
+        },
     },
     {
         timestamps: true,
