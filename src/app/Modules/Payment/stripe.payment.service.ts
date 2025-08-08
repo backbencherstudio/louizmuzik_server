@@ -12,6 +12,7 @@ import config from "../../config";
 import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { paymentSucceededEmail } from "../../utils/paymentSucceededEmail";
+import { stripePaymentFailedEmail } from "../../utils/stripePaymentFailedEmail";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -308,6 +309,7 @@ const handleInvoiceUpcoming = async (event: Stripe.Event) => {
   console.log(`📅 Upcoming invoice for ${email}, amount: ${amount}`);
 };
 
+
 const handlePaymentFailed = async (event: Stripe.Event) => {
 
   const invoice = event?.data?.object as Stripe.Invoice;
@@ -318,7 +320,12 @@ const handlePaymentFailed = async (event: Stripe.Event) => {
     await User.findOneAndUpdate({ email }, {
       isPro: false,
     });
+
+    await stripePaymentFailedEmail(email)
   }
+
+
+
 
 
 };
@@ -423,7 +430,7 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
       subscribedAmount: parseFloat(amount),
     });
 
-    if (invoiceURL && invoiceId) {      
+    if (invoiceURL && invoiceId) {
       await Transactions.create({
         invoiceId,
         email,
