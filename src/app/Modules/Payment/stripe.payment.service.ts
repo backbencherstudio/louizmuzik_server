@@ -13,6 +13,7 @@ import { Request, Response } from "express";
 import nodemailer from "nodemailer";
 import { paymentSucceededEmail } from "../../utils/paymentSucceededEmail";
 import { stripePaymentFailedEmail } from "../../utils/stripePaymentFailedEmail";
+import { subscriptionScheduleCanceledEmail } from "../../utils/subscriptionScheduleCanceledEmail";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -359,6 +360,8 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   const metadata = customer.metadata || {};
 
   const userId = metadata?.userId || 'N/A';
+  const email = metadata?.email || 'N/A';
+  const name = metadata?.name || 'N/A';
 
   console.log("schedule cancel === ", userId);
 
@@ -368,6 +371,8 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
     subscriptionId: null,
     subscribedAmount: 0
   });
+
+  await subscriptionScheduleCanceledEmail(email, name)
 };
 
 // const handleInvoiceFinalized = async (event: Stripe.Event) => {
