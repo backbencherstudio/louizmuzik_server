@@ -14,6 +14,7 @@ import nodemailer from "nodemailer";
 import { paymentSucceededEmail } from "../../utils/paymentSucceededEmail";
 import { stripePaymentFailedEmail } from "../../utils/stripePaymentFailedEmail";
 import { subscriptionScheduleCanceledEmail } from "../../utils/subscriptionScheduleCanceledEmail";
+import { freeTrialEmailNotification } from "../../utils/freeTrialEmailNotification";
 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -260,7 +261,7 @@ const stripeSubscription = async (
 
     // trial logic
     const isEligibleForTrial = !user.hasUsedTrial;
-    const trialDays = isEligibleForTrial ? 1 : 0;
+    const trialDays = isEligibleForTrial ? 1 : 0;    // in production mood need to change trial day
 
     // Create subscription
     const subscription = await stripe.subscriptions.create({
@@ -447,6 +448,20 @@ const cancelSubscription = async (req: Request, res: Response) => {
       { new: true, runValidators: true }
     );
 
+    console.log(451, { subscription });
+    console.log(452, subscription?.status);
+
+
+    if (subscription.status === "trialing") {
+      await User.findByIdAndUpdate(
+        { _id: user._id },
+        { $set: { isPro: false } },
+        { new: true, runValidators: true }
+      );
+    }
+
+
+
     // Email content
     const textContent = `
       Hello,
@@ -487,6 +502,8 @@ const cancelSubscription = async (req: Request, res: Response) => {
         </div>
       </div>
     `;
+
+
 
     await sendEmail(
       user.email,
@@ -660,30 +677,50 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 
 
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
+  // const invoice = event.data.object as Stripe.Invoice;
+  // const subscription = event.data.object as Stripe.Subscription;
+  // const customerId = subscription.customer as string;
+  // const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+  // const metadata = customer.metadata || {};
+  // const invoiceURL = invoice.invoice_pdf || 'N/A';
+
+  // const email = metadata.email || 'N/A';
+  // const name = metadata.name || 'N/A';
+  // const userId = metadata.userId || 'N/A';
+  // const amount = metadata.amount || '0';
+  // const trialUsed = metadata.trialUsed;
+
+  // console.log({ metadata });
+  // console.log({ trialUsed });
+
   const invoice = event.data.object as Stripe.Invoice;
-  const subscription = event.data.object as Stripe.Subscription;
-  const customerId = subscription.customer as string;
-  const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-  const metadata = customer.metadata || {};
-  const invoiceURL = invoice.invoice_pdf || 'N/A';
-  const invoiceId = invoice.id;
+  const subscriptionId = invoice.subscription as string;
+
+  // ✅ Fetch subscription directly to get trialUsed and other metadata
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const metadata = subscription.metadata || {};
 
   const email = metadata.email || 'N/A';
   const name = metadata.name || 'N/A';
   const userId = metadata.userId || 'N/A';
   const amount = metadata.amount || '0';
-  const trialUsed = metadata.trialUsed || '0';
+  const trialUsed = metadata.trialUsed;
+  const invoiceURL = invoice.invoice_pdf || 'N/A';
+
+  console.log({ metadata });
+
 
   if (userId !== 'N/A') {
-
-    await User.findByIdAndUpdate(userId, {
-      isPro: subscription.status === "active",
+    const res = await User.findByIdAndUpdate({ _id: userId }, {
+      // isPro: subscription.status === "active",
+      isPro: true,
       subscribedAmount: parseFloat(amount),
     });
 
-    if (invoiceURL && invoiceId) {
+
+
+    if (invoiceURL && trialUsed === "no") {
       await Transactions.create({
-        invoiceId,
         email,
         name,
         userId,
@@ -694,7 +731,12 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
       });
     }
 
-    await paymentSucceededEmail(email, invoiceURL)
+    if (trialUsed === "no") {
+      await paymentSucceededEmail(email, invoiceURL)
+    } else {
+      await freeTrialEmailNotification(email)
+    }
+
   }
 
 

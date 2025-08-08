@@ -7,6 +7,5 @@ export interface ITransactions {
   commission?: number;
   subscriptionAmount?: number;
   salesAmount?: number;
-  invoiceId : string;
-  invoiceURL : string;
+  invoiceURL ?: string;
 }

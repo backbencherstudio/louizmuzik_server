@@ -13,8 +13,6 @@ export const paymentSucceededEmail = async (to: string, invoiceUrl: string) => {
   });
 
   const year = new Date().getFullYear();
-//   const invoiceUrl = `https://yourdomain.com/invoice/${invoiceId}`; // Replace with your invoice viewer route
-
   await transporter.sendMail({
     from: config.sender_email,
     to,
