@@ -173,7 +173,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         console.warn('⚠️ Failed to cancel existing trial subscription:', cancelErr?.response?.data || cancelErr?.message);
         // proceed anyway to create a paid plan (but inform via logs)
         giveTrial = false;
-        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(()=>{});
+        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
       }
     }
 
@@ -287,7 +287,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
     // 5) Mark hasUsedTrial true if we gave trial (so user won't get trial again later)
     //    Also, if we forced cancellation because user upgraded, we already set hasUsedTrial = true earlier.
     if (giveTrial) {
-      await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(()=>{});
+      await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
     }
 
     // 6) Save the created subscription id & plan id (optional — webhook will also update on activation)
@@ -587,6 +587,41 @@ const webhookEvent = async (event: any, headers: any) => {
       const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
       const amount = event.resource.billing_info?.last_payment?.amount?.value;
 
+      console.log({ amount });
+
+      const todayDateObj = new Date();
+      const lastMonthDateObj = new Date();
+      lastMonthDateObj.setMonth(lastMonthDateObj.getMonth() - 1);
+
+      const today = todayDateObj.toISOString().split("T")[0];       // e.g. 2025-08-11
+      const lastMonthDate = lastMonthDateObj.toISOString().split("T")[0]; // e.g. 2025-07-11
+
+
+      // const transactionsRes = await axios.get(
+      //   `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/transactions?start_time=${lastMonthDate}T00:00:00Z&end_time=${today}T23:59:59Z`,
+      //   {
+      //     headers: { Authorization: `Bearer ${accessToken}` },
+      //   }
+      // );
+
+      // const invoiceData = transactionsRes.data.transactions?.[0] || null;
+
+      // console.log("invoiceData", invoiceData?.links);
+
+
+      const transactionsRes = await axios.get(
+        `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/transactions?start_time=${lastMonthDate}T00:00:00Z&end_time=${today}T23:59:59Z`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const invoiceData = transactionsRes.data.transactions?.[0] || null;
+      const invoiceURL = invoiceData?.links?.find((l: any) => l.rel === "self")?.href || "N/A";
+      console.log(invoiceData);
+      console.log(invoiceURL);
+      
+
       const subscribedUserData = await User.findOne({ email: customEmail });
       if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
 
@@ -641,7 +676,7 @@ const webhookEvent = async (event: any, headers: any) => {
           isPro: true,
           paypalSubscriptionId: subscriptionId,
           paypalPlanId: planId,
-          subscribedAmount: amount,
+          subscribedAmount: parseInt(amount) | 0,
         },
         { new: true, runValidators: true }
       )
@@ -657,14 +692,18 @@ const webhookEvent = async (event: any, headers: any) => {
         email: subscribedUserData.email,
         name: subscribedUserData.producer_name,
         userId: subscribedUserData._id,
-        subscriptionAmount: parseInt(amount),
+        subscriptionAmount: parseInt(amount) | 0,
+        invoiceURL: invoiceURL || "N/A",
         salesAmount: 0,
         commission: 0,
       };
+
+      console.log({ transaction });
+
       await Transactions.create(transaction);
     }
 
-    
+
 
     // ===================== auto pay data store 
     if (event.event_type === "PAYMENT.SALE.COMPLETED") {
@@ -682,7 +721,7 @@ const webhookEvent = async (event: any, headers: any) => {
         email: user.email,
         name: user.producer_name,
         userId: user._id,
-        subscriptionAmount: parseInt(amount),
+        subscriptionAmount: parseInt(amount) | 0,
         salesAmount: 0,
         commission: 0,
       };

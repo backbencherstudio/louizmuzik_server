@@ -11,7 +11,7 @@ const TransactionsSchema = new Schema<ITransactions>(
         salesAmount: { type: Number },
         invoiceURL: {
             type: String,
-            unique: true,
+            default: "N/A"
         },
     },
     {
