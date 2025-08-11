@@ -9,241 +9,45 @@ import { Transactions } from './payment.module';
 import httpStatus from 'http-status';
 
 
-// const paypalSubscription = async (amount: number, userEmail: string) => {
-//   const accessToken = await generateAccessToken();
-
-//   try {
-//     const product = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
-//       {
-//         name: "Dynamic Subscription Product",
-//         type: "SERVICE",
-//         category: "SOFTWARE",
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const plan = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
-//       {
-//         product_id: product.data.id,
-//         name: `Subscription for $${amount}`,
-//         billing_cycles: [
-//           // <-- Added 7-day FREE TRIAL cycle (TRIAL)
-//           {
-//             frequency: { interval_unit: "DAY", interval_count: 7 }, // ৭ দিনের ট্রায়াল
-//             tenure_type: "TRIAL",
-//             sequence: 1,
-//             total_cycles: 1, // ট্রায়াল একবার চলবে
-//             pricing_scheme: {
-//               fixed_price: {
-//                 value: "0", // ট্রায়ালে টাকা কাটা হবে না
-//                 currency_code: "USD",
-//               },
-//             },
-//           },
-//           // <-- Regular monthly billing cycle
-//           {
-//             frequency: { interval_unit: "MONTH", interval_count: 1 },
-//             tenure_type: "REGULAR",
-//             sequence: 2,
-//             total_cycles: 0,
-//             pricing_scheme: {
-//               fixed_price: {
-//                 value: amount.toString(),
-//                 currency_code: "USD",
-//               },
-//             },
-//           },
-//         ],
-//         payment_preferences: {
-//           auto_bill_outstanding: true,
-//           payment_failure_threshold: 1,
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const subscription = await axios.post(
-//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
-//       {
-//         plan_id: plan.data.id,
-//         custom_id: userEmail,
-//         application_context: {
-//           brand_name: "melody",
-//           user_action: "SUBSCRIBE_NOW",
-//           return_url: "http://localhost:3000/success",
-//           cancel_url: "http://localhost:3000/cancel",
-//         },
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     const approvalLink = subscription.data.links.find(
-//       (link: any) => link.rel === "approve"
-//     );
-
-//     if (!approvalLink) {
-//       throw new AppError(500, "Approval link not found");
-//     }
-
-//     return { url: approvalLink.href };
-
-//   } catch (error: any) {
-//     console.error("❌ Paypal Subscription Error:", error.response?.data || error.message);
-//     throw new AppError(500, error.response?.data?.message || error.message);
-//   }
-// };
-
-
 const paypalSubscription = async (amount: number, userEmail: string) => {
   const accessToken = await generateAccessToken();
 
   try {
-    // 1) Find user in DB
-    const user = await User.findOne({ email: userEmail });
-    if (!user) {
-      throw new AppError(404, 'User not found');
-    }
-
-    // If user already used trial -> do NOT give trial
-    // If user has started a trial subscription previously but hasUsedTrial flag is false (edge case),
-    // and they now call this function to start paid immediately, we'll cancel existing and mark hasUsedTrial = true.
-    let giveTrial = !user.hasUsedTrial; // if undefined -> treated as false => giveTrial = true
-
-    // If user has an existing paypalSubscriptionId and hasn't been marked hasUsedTrial,
-    // we assume they started a trial earlier — user wants to upgrade now:
-    if (user.paypalSubscriptionId && !user.hasUsedTrial) {
-      console.log('User has existing subscription (likely trial). Cancelling trial to start paid subscription now.');
-      try {
-        // Cancel the existing subscription
-        await axios.post(
-          `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}/cancel`,
-          { reason: 'User upgraded from trial to paid subscription.' },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        // fetch its plan id to deactivate
-        const subRes = await axios.get(
-          `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}`,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-        const oldPlanId = subRes.data.plan_id;
-        if (oldPlanId) {
-          await axios.post(
-            `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${oldPlanId}/deactivate`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-        }
-
-        // mark hasUsedTrial so user never gets trial again
-        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true });
-
-        // after cancelling, we will NOT give trial for the new plan
-        giveTrial = false;
-      } catch (cancelErr: any) {
-        console.warn('⚠️ Failed to cancel existing trial subscription:', cancelErr?.response?.data || cancelErr?.message);
-        // proceed anyway to create a paid plan (but inform via logs)
-        giveTrial = false;
-        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(()=>{});
-      }
-    }
-
-    // 2) Create product
     const product = await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
       {
-        name: 'Dynamic Subscription Product',
-        type: 'SERVICE',
-        category: 'SOFTWARE',
+        name: "Dynamic Subscription Product",
+        type: "SERVICE",
+        category: "SOFTWARE",
       },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
-
-    // 3) Build billing_cycles based on giveTrial flag
-    const billing_cycles: any[] = [];
-
-    if (giveTrial) {
-      billing_cycles.push({
-        frequency: { interval_unit: 'DAY', interval_count: 7 }, // 7-day trial
-        tenure_type: 'TRIAL',
-        sequence: 1,
-        total_cycles: 1,
-        pricing_scheme: {
-          fixed_price: {
-            value: '0',
-            currency_code: 'USD',
-          },
-        },
-      });
-      // Regular cycle will be sequence 2
-      billing_cycles.push({
-        frequency: { interval_unit: 'MONTH', interval_count: 1 },
-        tenure_type: 'REGULAR',
-        sequence: 2,
-        total_cycles: 0,
-        pricing_scheme: {
-          fixed_price: {
-            value: amount.toString(),
-            currency_code: 'USD',
-          },
-        },
-      });
-    } else {
-      // No trial — only regular cycle (sequence 1)
-      billing_cycles.push({
-        frequency: { interval_unit: 'MONTH', interval_count: 1 },
-        tenure_type: 'REGULAR',
-        sequence: 1,
-        total_cycles: 0,
-        pricing_scheme: {
-          fixed_price: {
-            value: amount.toString(),
-            currency_code: 'USD',
-          },
-        },
-      });
-    }
 
     const plan = await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
       {
         product_id: product.data.id,
         name: `Subscription for $${amount}`,
-        billing_cycles,
+        billing_cycles: [
+          {
+            frequency: { interval_unit: "MONTH", interval_count: 1 },
+            // frequency: { interval_unit: "DAY", interval_count: 1 },
+            tenure_type: "REGULAR",
+            sequence: 1,
+            total_cycles: 0,
+            pricing_scheme: {
+              fixed_price: {
+                value: amount.toString(),
+                currency_code: "USD",
+              },
+            },
+          },
+        ],
         payment_preferences: {
           auto_bill_outstanding: true,
           payment_failure_threshold: 1,
@@ -252,65 +56,46 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
 
-    // 4) Create subscription (user will have to approve it via returned approval link)
     const subscription = await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
       {
         plan_id: plan.data.id,
         custom_id: userEmail,
         application_context: {
-          brand_name: 'melody',
-          user_action: 'SUBSCRIBE_NOW',
-          return_url: 'http://localhost:3000/success',
-          cancel_url: 'http://localhost:3000/cancel',
+          brand_name: "melody",
+          user_action: "SUBSCRIBE_NOW",
+          return_url: "http://localhost:3000/success",
+          cancel_url: "http://localhost:3000/cancel",
         },
       },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
 
-    const approvalLink = subscription.data.links.find((link: any) => link.rel === 'approve');
+    const approvalLink = subscription.data.links.find(
+      (link: any) => link.rel === "approve"
+    );
 
     if (!approvalLink) {
-      throw new AppError(500, 'Approval link not found');
+      throw new AppError(500, "Approval link not found");
     }
 
-    // 5) Mark hasUsedTrial true if we gave trial (so user won't get trial again later)
-    //    Also, if we forced cancellation because user upgraded, we already set hasUsedTrial = true earlier.
-    if (giveTrial) {
-      await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(()=>{});
-    }
+    return { url: approvalLink.href };
 
-    // 6) Save the created subscription id & plan id (optional — webhook will also update on activation)
-    try {
-      // await User.findByIdAndUpdate(
-      //   user._id,
-      //   {
-      //     paypalSubscriptionId: subscription.data.id || null,
-      //     paypalPlanId: plan.data.id || null,
-      //   },
-      //   { new: true, runValidators: true }
-      // );
-    } catch (e) {
-      console.warn('⚠️ Failed to save paypalSubscriptionId/paypalPlanId locally:', (e as any)?.message || e);
-    }
-
-    return { url: approvalLink.href, subscriptionId: subscription.data.id, planId: plan.data.id, trialGiven: giveTrial };
   } catch (error: any) {
-    console.error('❌ Paypal Subscription Error:', error.response?.data || error.message);
+    console.error("❌ Paypal Subscription Error:", error.response?.data || error.message);
     throw new AppError(500, error.response?.data?.message || error.message);
   }
 };
-
 
 const paypalSubscriptionCancel = async (subscriptionId: string) => {
   const accessToken = await generateAccessToken();
@@ -446,7 +231,6 @@ const captureOrder = async (orderID: string) => {
 
 
 
-
 const webhookEvent = async (event: any, headers: any) => {
   try {
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
@@ -487,7 +271,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
     console.log("webhook hiiitt");
 
-    // ================== when a user purses pack then call this  hook
+    // ================== when a user purses pack then this this hook
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
       const purchaseUnit = resource.purchase_units?.[0];
@@ -664,8 +448,6 @@ const webhookEvent = async (event: any, headers: any) => {
       await Transactions.create(transaction);
     }
 
-    
-
     // ===================== auto pay data store 
     if (event.event_type === "PAYMENT.SALE.COMPLETED") {
       const amount = event.resource.amount?.total;
@@ -701,6 +483,123 @@ const webhookEvent = async (event: any, headers: any) => {
       });
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
     }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+    //   // const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+
+    //   // await User.findOneAndUpdate(
+    //   //   { paypalSubscriptionId: subscriptionId },
+    //   //   {
+    //   //     isPro: true, // Still true until the end date
+    //   //     subscriptionEndDate: new Date(nextBillingTime), // Save expiry date
+    //   //     paypalSubscriptionId: null,
+    //   //     paypalPlanId: null,
+    //   //     subscribedAmount: 0,
+    //   //   }
+    //   // );
+
+    //   await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     {
+    //       $set: {
+    //         isPro: true,
+    //         subscriptionEndDate: new Date(nextBillingTime),
+    //         paypalSubscriptionId: null,
+    //         paypalPlanId: null,
+    //         subscribedAmount: 0,
+    //       },
+    //     },
+    //     { new: true, runValidators: true }
+    //   );
+
+
+    //   console.log("❌ Subscription cancelled, access remains until:", nextBillingTime);
+    // }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+    //   const nextBillingTime = event.resource.billing_info?.next_billing_time;
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+    //   let endDate: Date | null = null;
+    //   if (nextBillingTime && !isNaN(Date.parse(nextBillingTime))) {
+    //     endDate = new Date(nextBillingTime);
+    //   } else {
+    //     console.warn("⚠️ nextBillingTime is invalid or missing:", nextBillingTime);
+    //   }
+
+    //   const updateData: Partial<TUser> = {
+    //     isPro: true,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //   };
+
+    //   if (endDate) {
+    //     updateData.subscriptionEndDate = endDate;
+    //   }
+
+    //   await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     { $set: updateData },
+    //     { new: true, runValidators: true }
+    //   );
+
+    //   console.log("❌ Subscription cancelled, access remains until:", endDate);
+    // }
+
+    // if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
+    //   const subscriptionId = event.resource.id;
+
+    //   // Try to extract next_billing_time or use fallback
+    //   let nextBillingTime: string | undefined = event.resource.billing_info?.next_billing_time;
+
+    //   if (!nextBillingTime) {
+    //     // Fallback to last payment time (optional)
+    //     nextBillingTime = event.resource.billing_info?.last_payment?.time;
+    //     console.warn("⚠️ Using last payment time as fallback:", nextBillingTime);
+    //   }
+
+    //   console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
+
+    //   let endDate: Date | null = null;
+    //   if (nextBillingTime && !isNaN(Date.parse(nextBillingTime))) {
+    //     endDate = new Date(nextBillingTime);
+    //   } else {
+    //     console.warn("⚠️ nextBillingTime is invalid or missing:", nextBillingTime);
+    //     endDate = new Date(); // fallback to now
+    //   }
+
+    //   // Prepare update data
+    //   const updateData: Partial<TUser> = {
+    //     isPro: true,
+    //     paypalSubscriptionId: null,
+    //     paypalPlanId: null,
+    //     subscribedAmount: 0,
+    //     subscriptionEndDate: endDate,
+    //   };
+
+    //   // Run the update
+    //   const updatedUser = await User.findOneAndUpdate(
+    //     { paypalSubscriptionId: subscriptionId },
+    //     { $set: updateData },
+    //     { new: true, runValidators: true }
+    //   );
+
+    //   if (updatedUser) {
+    //     console.log("✅ User updated after cancellation:", updatedUser.email);
+    //   } else {
+    //     console.error("❌ No user found with subscriptionId:", subscriptionId);
+    //   }
+
+    //   console.log("❌ Subscription cancelled, access remains until:", endDate);
+    // }
+
+
 
     // =================== subscription canseled or ( amount not available then subscription auto cansel )
     if (event.event_type === "BILLING.SUBSCRIPTION.SUSPENDED") {
