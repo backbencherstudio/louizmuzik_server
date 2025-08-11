@@ -71,6 +71,10 @@ const userSchema = new Schema<TUser>(
       type: Boolean,
       default: false,
     },
+    cancelRequest: {
+      type: Boolean,
+      default: false,
+    },
     profile_image: { type: String, default: '' },
     isPro: { type: Boolean, default: false },
     hasUsedTrial: { type: Boolean, default: false },
@@ -90,6 +94,7 @@ const userSchema = new Schema<TUser>(
     paypalSubscriptionId: { type: String },
     paypalPlanId: { type: String },
     customerId: { type: String },
+    paymentMethod: { type: String },
     subscriptionId: { type: String },
     subscribedAmount: { type: Number },
     subscriptionEndDate: { type: Date },

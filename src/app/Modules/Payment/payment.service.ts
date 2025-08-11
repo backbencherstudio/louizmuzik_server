@@ -375,13 +375,14 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
       {
         $set: {
           subscriptionEndDate: endDate,
+          cancelRequest: true
         },
       },
       { new: true, runValidators: true }
     );
     if (res) {
       console.log("cancel res", res);
-      
+
       await paypalSubscriptionCencelEmailNoti(res?.email, res?.name)
     }
 
@@ -659,13 +660,14 @@ const webhookEvent = async (event: any, headers: any) => {
           paypalSubscriptionId: subscriptionId,
           paypalPlanId: planId,
           subscribedAmount: parseInt(amount) | 0,
+          paymentMethod: "paypal"
         },
         { new: true, runValidators: true }
       )
 
       await User.findOneAndUpdate(
         { email: subscribedUserData.email },
-        { $unset: { subscriptionEndDate: "" } },
+        { $unset: { subscriptionEndDate: "", cancelRequest : false } },
         { new: true, runValidators: true }
       );
 
@@ -675,7 +677,7 @@ const webhookEvent = async (event: any, headers: any) => {
         name: subscribedUserData.producer_name,
         userId: subscribedUserData._id,
         subscriptionAmount: parseInt(amount) | 0,
-        invoiceURL:  "N/A",
+        invoiceURL: "N/A",
         salesAmount: 0,
         commission: 0,
       };
@@ -724,7 +726,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
     }
 
-   
+
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
       const subscriptionId = event.resource.id;
       const res = await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {

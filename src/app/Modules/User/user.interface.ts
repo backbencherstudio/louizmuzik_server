@@ -17,6 +17,7 @@ export interface TUser {
   profile_image: string;
   isPro: boolean;
   hasUsedTrial: boolean;
+  cancelRequest: boolean;
   melodiesCounter: number;
   about: string;
   followersCounter: number;
@@ -34,6 +35,7 @@ export interface TUser {
   paypalPlanId? : string | null; 
   customerId? : string; 
   subscriptionId? : string; 
+  paymentMethod? : string; 
   subscribedAmount? : number;
   subscriptionEndDate? : Date;
 }

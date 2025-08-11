@@ -296,20 +296,23 @@ const stripeSubscription = async (
     }
 
     // Update user in MongoDB
-    await User.findOneAndUpdate(
-      { email },
-      {
-        $set: {
-          customerId,
-          subscriptionId: subscription.id,
-          isPro: true,
-          subscribedAmount: amount,
-          hasUsedTrial: true,
+    if (customerId) {
+      await User.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            customerId,
+            subscriptionId: subscription.id,
+            isPro: true,
+            subscribedAmount: amount,
+            hasUsedTrial: true,
+            cancelRequest: false,
+            paymentMethod: "stripe"
+          },
         },
-      },
-      { new: true, runValidators: true }
-    );
-
+        { new: true, runValidators: true }
+      );
+    }
     return res.status(200).send({
       subscriptionId: subscription.id,
       clientSecret: paymentIntent?.client_secret || null,
