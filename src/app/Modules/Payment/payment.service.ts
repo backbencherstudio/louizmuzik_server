@@ -117,6 +117,210 @@ import { subscriptionScheduleCanceledEmail } from '../../utils/subscriptionSched
 // };
 
 
+// const paypalSubscription = async (amount: number, userEmail: string) => {
+//   const accessToken = await generateAccessToken();
+
+//   try {
+//     // 1) Find user in DB
+//     const user = await User.findOne({ email: userEmail });
+//     if (!user) {
+//       throw new AppError(404, 'User not found');
+//     }
+
+//     // If user already used trial -> do NOT give trial
+//     // If user has started a trial subscription previously but hasUsedTrial flag is false (edge case),
+//     // and they now call this function to start paid immediately, we'll cancel existing and mark hasUsedTrial = true.
+//     let giveTrial = user.hasUsedTrial; // if undefined -> treated as false => giveTrial = true
+
+//     console.log({giveTrial});
+    
+
+//     // If user has an existing paypalSubscriptionId and hasn't been marked hasUsedTrial,
+//     // we assume they started a trial earlier — user wants to upgrade now:
+//     if (user.paypalSubscriptionId && user.hasUsedTrial) {
+//       console.log('User has existing subscription (likely trial). Cancelling trial to start paid subscription now.');
+//       try {
+//         // Cancel the existing subscription
+//         await axios.post(
+//           `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}/cancel`,
+//           { reason: 'User upgraded from trial to paid subscription.' },
+//           {
+//             headers: {
+//               Authorization: `Bearer ${accessToken}`,
+//               'Content-Type': 'application/json',
+//             },
+//           }
+//         );
+
+//         // fetch its plan id to deactivate
+//         const subRes = await axios.get(
+//           `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}`,
+//           {
+//             headers: { Authorization: `Bearer ${accessToken}` },
+//           }
+//         );
+//         const oldPlanId = subRes.data.plan_id;
+//         if (oldPlanId) {
+//           await axios.post(
+//             `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${oldPlanId}/deactivate`,
+//             {},
+//             {
+//               headers: {
+//                 Authorization: `Bearer ${accessToken}`,
+//                 'Content-Type': 'application/json',
+//               },
+//             }
+//           );
+//         }
+
+//         // mark hasUsedTrial so user never gets trial again
+//         await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true });
+
+//         // after cancelling, we will NOT give trial for the new plan
+//         giveTrial = false;
+//       } catch (cancelErr: any) {
+//         console.warn('⚠️ Failed to cancel existing trial subscription:', cancelErr?.response?.data || cancelErr?.message);
+//         // proceed anyway to create a paid plan (but inform via logs)
+//         giveTrial = false;
+//         await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+//       }
+//     }
+
+//     // 2) Create product
+//     const product = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
+//       {
+//         name: 'Dynamic Subscription Product',
+//         type: 'SERVICE',
+//         category: 'SOFTWARE',
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     // 3) Build billing_cycles based on giveTrial flag
+//     const billing_cycles: any[] = [];
+
+//     if (!giveTrial) {
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'DAY', interval_count: 7 }, // 7-day trial
+//         tenure_type: 'TRIAL',
+//         sequence: 1,
+//         total_cycles: 1,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: '0',
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//       // Regular cycle will be sequence 2
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'MONTH', interval_count: 1 },
+//         tenure_type: 'REGULAR',
+//         sequence: 2,
+//         total_cycles: 0,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: amount.toString(),
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//     } else {
+//       // No trial — only regular cycle (sequence 1)
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'MONTH', interval_count: 1 },
+//         tenure_type: 'REGULAR',
+//         sequence: 1,
+//         total_cycles: 0,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: amount.toString(),
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//     }
+
+//     const plan = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
+//       {
+//         product_id: product.data.id,
+//         name: `Subscription for $${amount}`,
+//         billing_cycles,
+//         payment_preferences: {
+//           auto_bill_outstanding: true,
+//           payment_failure_threshold: 1,
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     // 4) Create subscription (user will have to approve it via returned approval link)
+//     const subscription = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
+//       {
+//         plan_id: plan.data.id,
+//         custom_id: userEmail,
+//         application_context: {
+//           brand_name: 'melody',
+//           user_action: 'SUBSCRIBE_NOW',
+//           return_url: 'http://localhost:3000/success',
+//           cancel_url: 'http://localhost:3000/cancel',
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     const approvalLink = subscription.data.links.find((link: any) => link.rel === 'approve');
+
+//     if (!approvalLink) {
+//       throw new AppError(500, 'Approval link not found');
+//     }
+
+//     // 5) Mark hasUsedTrial true if we gave trial (so user won't get trial again later)
+//     //    Also, if we forced cancellation because user upgraded, we already set hasUsedTrial = true earlier.
+//     if (!giveTrial) {
+//       await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+//     }
+
+//     // 6) Save the created subscription id & plan id (optional — webhook will also update on activation)
+//     try {
+//       // await User.findByIdAndUpdate(
+//       //   user._id,
+//       //   {
+//       //     paypalSubscriptionId: subscription.data.id || null,
+//       //     paypalPlanId: plan.data.id || null,
+//       //   },
+//       //   { new: true, runValidators: true }
+//       // );
+//     } catch (e) {
+//       console.warn('⚠️ Failed to save paypalSubscriptionId/paypalPlanId locally:', (e as any)?.message || e);
+//     }
+
+//     return { url: approvalLink.href, subscriptionId: subscription.data.id, planId: plan.data.id, trialGiven: giveTrial };
+//   } catch (error: any) {
+//     console.error('❌ Paypal Subscription Error:', error.response?.data || error.message);
+//     throw new AppError(500, error.response?.data?.message || error.message);
+//   }
+// };
+
+
 const paypalSubscription = async (amount: number, userEmail: string) => {
   const accessToken = await generateAccessToken();
 
@@ -127,13 +331,14 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
       throw new AppError(404, 'User not found');
     }
 
-    // If user already used trial -> do NOT give trial
-    // If user has started a trial subscription previously but hasUsedTrial flag is false (edge case),
-    // and they now call this function to start paid immediately, we'll cancel existing and mark hasUsedTrial = true.
-    let giveTrial = !user.hasUsedTrial; // if undefined -> treated as false => giveTrial = true
+    // If user has NOT used trial before (false or undefined) => giveTrial = true (trial allowed)
+    // If user has used trial before (true) => giveTrial = false (no trial)
+    let giveTrial = !user.hasUsedTrial;
 
-    // If user has an existing paypalSubscriptionId and hasn't been marked hasUsedTrial,
-    // we assume they started a trial earlier — user wants to upgrade now:
+    console.log({ giveTrial });
+
+    // If user has an existing paypalSubscriptionId and hasUsedTrial = false (edge case)
+    // we cancel existing trial and mark trial as used, because now they want paid subscription immediately
     if (user.paypalSubscriptionId && !user.hasUsedTrial) {
       console.log('User has existing subscription (likely trial). Cancelling trial to start paid subscription now.');
       try {
@@ -149,7 +354,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
           }
         );
 
-        // fetch its plan id to deactivate
+        // fetch plan id to deactivate
         const subRes = await axios.get(
           `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}`,
           {
@@ -203,6 +408,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
     const billing_cycles: any[] = [];
 
     if (giveTrial) {
+      // User gets a 7-day free trial first (sequence 1)
       billing_cycles.push({
         frequency: { interval_unit: 'DAY', interval_count: 7 }, // 7-day trial
         tenure_type: 'TRIAL',
@@ -215,7 +421,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
           },
         },
       });
-      // Regular cycle will be sequence 2
+      // Then regular billing cycle (sequence 2)
       billing_cycles.push({
         frequency: { interval_unit: 'MONTH', interval_count: 1 },
         tenure_type: 'REGULAR',
@@ -229,7 +435,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         },
       });
     } else {
-      // No trial — only regular cycle (sequence 1)
+      // No trial — only regular billing cycle (sequence 1)
       billing_cycles.push({
         frequency: { interval_unit: 'MONTH', interval_count: 1 },
         tenure_type: 'REGULAR',
@@ -244,6 +450,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
       });
     }
 
+    // 4) Create billing plan
     const plan = await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
       {
@@ -263,7 +470,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
       }
     );
 
-    // 4) Create subscription (user will have to approve it via returned approval link)
+    // 5) Create subscription (user must approve via approval link)
     const subscription = await axios.post(
       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
       {
@@ -290,13 +497,13 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
       throw new AppError(500, 'Approval link not found');
     }
 
-    // 5) Mark hasUsedTrial true if we gave trial (so user won't get trial again later)
-    //    Also, if we forced cancellation because user upgraded, we already set hasUsedTrial = true earlier.
+    // 6) If we gave trial, mark hasUsedTrial = true so user cannot get trial again later
+    //    If user upgraded and trial was cancelled earlier, already marked true.
     if (giveTrial) {
       await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
     }
 
-    // 6) Save the created subscription id & plan id (optional — webhook will also update on activation)
+    // 7) Optionally save subscriptionId & planId locally (commented out)
     try {
       // await User.findByIdAndUpdate(
       //   user._id,
@@ -882,3 +1089,223 @@ export const paymentService = {
   captureOrder,
   webhookEvent
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ============== gpt comment 
+// const paypalSubscription = async (amount: number, userEmail: string) => {
+//   const accessToken = await generateAccessToken();
+
+//   try {
+//     // 1) Find user in DB
+//     const user = await User.findOne({ email: userEmail });
+//     if (!user) {
+//       throw new AppError(404, 'User not found');
+//     }
+
+//     // If user already used trial -> do NOT give trial
+//     // If user has started a trial subscription previously but hasUsedTrial flag is false (edge case),
+//     // and they now call this function to start paid immediately, we'll cancel existing and mark hasUsedTrial = true.
+//     let giveTrial = user.hasUsedTrial; // if undefined -> treated as false => giveTrial = true
+
+//     console.log({giveTrial});
+    
+
+//     // If user has an existing paypalSubscriptionId and hasn't been marked hasUsedTrial,
+//     // we assume they started a trial earlier — user wants to upgrade now:
+//     if (user.paypalSubscriptionId && user.hasUsedTrial) {
+//       console.log('User has existing subscription (likely trial). Cancelling trial to start paid subscription now.');
+//       try {
+//         // Cancel the existing subscription
+//         await axios.post(
+//           `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}/cancel`,
+//           { reason: 'User upgraded from trial to paid subscription.' },
+//           {
+//             headers: {
+//               Authorization: `Bearer ${accessToken}`,
+//               'Content-Type': 'application/json',
+//             },
+//           }
+//         );
+
+//         // fetch its plan id to deactivate
+//         const subRes = await axios.get(
+//           `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${user.paypalSubscriptionId}`,
+//           {
+//             headers: { Authorization: `Bearer ${accessToken}` },
+//           }
+//         );
+//         const oldPlanId = subRes.data.plan_id;
+//         if (oldPlanId) {
+//           await axios.post(
+//             `${process.env.PAYPAL_API_BASE}/v1/billing/plans/${oldPlanId}/deactivate`,
+//             {},
+//             {
+//               headers: {
+//                 Authorization: `Bearer ${accessToken}`,
+//                 'Content-Type': 'application/json',
+//               },
+//             }
+//           );
+//         }
+
+//         // mark hasUsedTrial so user never gets trial again
+//         await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true });
+
+//         // after cancelling, we will NOT give trial for the new plan
+//         giveTrial = false;
+//       } catch (cancelErr: any) {
+//         console.warn('⚠️ Failed to cancel existing trial subscription:', cancelErr?.response?.data || cancelErr?.message);
+//         // proceed anyway to create a paid plan (but inform via logs)
+//         giveTrial = false;
+//         await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+//       }
+//     }
+
+//     // 2) Create product
+//     const product = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/catalogs/products`,
+//       {
+//         name: 'Dynamic Subscription Product',
+//         type: 'SERVICE',
+//         category: 'SOFTWARE',
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     // 3) Build billing_cycles based on giveTrial flag
+//     const billing_cycles: any[] = [];
+
+//     if (!giveTrial) {
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'DAY', interval_count: 7 }, // 7-day trial
+//         tenure_type: 'TRIAL',
+//         sequence: 1,
+//         total_cycles: 1,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: '0',
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//       // Regular cycle will be sequence 2
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'MONTH', interval_count: 1 },
+//         tenure_type: 'REGULAR',
+//         sequence: 2,
+//         total_cycles: 0,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: amount.toString(),
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//     } else {
+//       // No trial — only regular cycle (sequence 1)
+//       billing_cycles.push({
+//         frequency: { interval_unit: 'MONTH', interval_count: 1 },
+//         tenure_type: 'REGULAR',
+//         sequence: 1,
+//         total_cycles: 0,
+//         pricing_scheme: {
+//           fixed_price: {
+//             value: amount.toString(),
+//             currency_code: 'USD',
+//           },
+//         },
+//       });
+//     }
+
+//     const plan = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/plans`,
+//       {
+//         product_id: product.data.id,
+//         name: `Subscription for $${amount}`,
+//         billing_cycles,
+//         payment_preferences: {
+//           auto_bill_outstanding: true,
+//           payment_failure_threshold: 1,
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     // 4) Create subscription (user will have to approve it via returned approval link)
+//     const subscription = await axios.post(
+//       `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions`,
+//       {
+//         plan_id: plan.data.id,
+//         custom_id: userEmail,
+//         application_context: {
+//           brand_name: 'melody',
+//           user_action: 'SUBSCRIBE_NOW',
+//           return_url: 'http://localhost:3000/success',
+//           cancel_url: 'http://localhost:3000/cancel',
+//         },
+//       },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           'Content-Type': 'application/json',
+//         },
+//       }
+//     );
+
+//     const approvalLink = subscription.data.links.find((link: any) => link.rel === 'approve');
+
+//     if (!approvalLink) {
+//       throw new AppError(500, 'Approval link not found');
+//     }
+
+//     // 5) Mark hasUsedTrial true if we gave trial (so user won't get trial again later)
+//     //    Also, if we forced cancellation because user upgraded, we already set hasUsedTrial = true earlier.
+//     if (!giveTrial) {
+//       await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+//     }
+
+//     // 6) Save the created subscription id & plan id (optional — webhook will also update on activation)
+//     try {
+//       // await User.findByIdAndUpdate(
+//       //   user._id,
+//       //   {
+//       //     paypalSubscriptionId: subscription.data.id || null,
+//       //     paypalPlanId: plan.data.id || null,
+//       //   },
+//       //   { new: true, runValidators: true }
+//       // );
+//     } catch (e) {
+//       console.warn('⚠️ Failed to save paypalSubscriptionId/paypalPlanId locally:', (e as any)?.message || e);
+//     }
+
+//     return { url: approvalLink.href, subscriptionId: subscription.data.id, planId: plan.data.id, trialGiven: giveTrial };
+//   } catch (error: any) {
+//     console.error('❌ Paypal Subscription Error:', error.response?.data || error.message);
+//     throw new AppError(500, error.response?.data?.message || error.message);
+//   }
+// };
+// ================ this is my code, 
+// there is a condetional subscription plan , the condetion is, if any user want to subscrib first time then he will get 7 days free trial, soo how we  know which user take this or not, 
+// follow this field ( let giveTrial = user.hasUsedTrial ) initial value is false, if value is false the the user will get the free trial but if value is true then the user can't take the free trial, other code work perfectly, just you fixed this condetion 
