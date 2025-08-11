@@ -732,7 +732,7 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
     }
 
     if (trialUsed === "no") {
-      await paymentSucceededEmail(email, invoiceURL)
+      await paymentSucceededEmail(email)
     } else {
       await freeTrialEmailNotification(email)
     }

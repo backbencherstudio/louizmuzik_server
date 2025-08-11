@@ -7,6 +7,12 @@ import { sendPayoutToEmail } from '../../middleware/sendPayoutToEmail';
 import { AppError } from '../../errors/AppErrors';
 import { Transactions } from './payment.module';
 import httpStatus from 'http-status';
+import { freeTrialEmailNotification } from '../../utils/freeTrialEmailNotification';
+import { paymentSucceededEmail } from '../../utils/paymentSucceededEmail';
+import { paypalSubscriptionCencelEmailNoti } from '../../utils/paypalSubscriptionCencelEmailNoti';
+import { stripePaymentFailedEmail } from '../../utils/stripePaymentFailedEmail';
+import { paypalPaymentSaleDeniedNotification } from '../../utils/paypalPaymentSaleDeniedNotification';
+import { subscriptionScheduleCanceledEmail } from '../../utils/subscriptionScheduleCanceledEmail';
 
 
 // const paypalSubscription = async (amount: number, userEmail: string) => {
@@ -364,7 +370,7 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
       endDate = new Date(nextBillingTime);
     }
 
-    await User.findOneAndUpdate(
+    const res = await User.findOneAndUpdate(
       { paypalSubscriptionId: subscriptionId },
       {
         $set: {
@@ -373,6 +379,13 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
       },
       { new: true, runValidators: true }
     );
+    if (res) {
+      console.log("cancel res", res);
+      
+      await paypalSubscriptionCencelEmailNoti(res?.email, res?.name)
+    }
+
+
 
     return { success: true };
   } catch (error: any) {
@@ -589,38 +602,7 @@ const webhookEvent = async (event: any, headers: any) => {
 
       console.log({ amount });
 
-      const todayDateObj = new Date();
-      const lastMonthDateObj = new Date();
-      lastMonthDateObj.setMonth(lastMonthDateObj.getMonth() - 1);
 
-      const today = todayDateObj.toISOString().split("T")[0];       // e.g. 2025-08-11
-      const lastMonthDate = lastMonthDateObj.toISOString().split("T")[0]; // e.g. 2025-07-11
-
-
-      // const transactionsRes = await axios.get(
-      //   `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/transactions?start_time=${lastMonthDate}T00:00:00Z&end_time=${today}T23:59:59Z`,
-      //   {
-      //     headers: { Authorization: `Bearer ${accessToken}` },
-      //   }
-      // );
-
-      // const invoiceData = transactionsRes.data.transactions?.[0] || null;
-
-      // console.log("invoiceData", invoiceData?.links);
-
-
-      const transactionsRes = await axios.get(
-        `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}/transactions?start_time=${lastMonthDate}T00:00:00Z&end_time=${today}T23:59:59Z`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      const invoiceData = transactionsRes.data.transactions?.[0] || null;
-      const invoiceURL = invoiceData?.links?.find((l: any) => l.rel === "self")?.href || "N/A";
-      console.log(invoiceData);
-      console.log(invoiceURL);
-      
 
       const subscribedUserData = await User.findOne({ email: customEmail });
       if (!subscribedUserData) throw new AppError(httpStatus.NOT_FOUND, 'User is not found');
@@ -693,7 +675,7 @@ const webhookEvent = async (event: any, headers: any) => {
         name: subscribedUserData.producer_name,
         userId: subscribedUserData._id,
         subscriptionAmount: parseInt(amount) | 0,
-        invoiceURL: invoiceURL || "N/A",
+        invoiceURL:  "N/A",
         salesAmount: 0,
         commission: 0,
       };
@@ -701,6 +683,11 @@ const webhookEvent = async (event: any, headers: any) => {
       console.log({ transaction });
 
       await Transactions.create(transaction);
+      if (transaction.subscriptionAmount === 0) {
+        await freeTrialEmailNotification(transaction.email)
+      } else {
+        await paymentSucceededEmail(transaction.email)
+      }
     }
 
 
@@ -726,19 +713,30 @@ const webhookEvent = async (event: any, headers: any) => {
         commission: 0,
       };
 
-      await Transactions.create(transaction);
+      const res = await Transactions.create(transaction);
+
+      if (res) {
+        await paymentSucceededEmail(user.email)
+      }
       console.log("✅ Monthly subscription payment logged for:", user.email);
+
+
+
     }
 
+   
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
       const subscriptionId = event.resource.id;
-      await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
+      const res = await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
         isPro: false,
         paypalSubscriptionId: null,
         paypalPlanId: null,
         subscribedAmount: 0,
       });
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
+      if (res) {
+        await subscriptionScheduleCanceledEmail(res.email, res.name)
+      }
     }
 
     // =================== subscription canseled or ( amount not available then subscription auto cansel )
@@ -792,6 +790,9 @@ const webhookEvent = async (event: any, headers: any) => {
             },
           }
         );
+
+        // =========== need to set here cancel subscription email notification 
+        await stripePaymentFailedEmail(user?.email)
 
         console.log("📉 User downgraded due to payment failure:", user.email);
       } else {
@@ -856,6 +857,8 @@ const webhookEvent = async (event: any, headers: any) => {
             }
           );
         }
+
+        await paypalPaymentSaleDeniedNotification(user.email, user.name, amount)
 
       }
 
