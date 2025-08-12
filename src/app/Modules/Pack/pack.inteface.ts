@@ -27,3 +27,19 @@ export interface IPackPurchase {
   selectedProducerId: Schema.Types.ObjectId;
   userId: Schema.Types.ObjectId;
 }
+
+// export interface IPaymentData {
+//   packId: Schema.Types.ObjectId;
+//   price: number;
+//   selectedProducerId: Schema.Types.ObjectId;
+//   userId: Schema.Types.ObjectId;
+// }
+
+export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
+
+export interface TdailySealseStats {
+  producerId: Schema.Types.ObjectId;
+  date: string; 
+  downloads: number;
+  day: DayOfWeek;
+}

@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { IPack, IPackPurchase } from "./pack.inteface";
+import { IPack, IPackPurchase, TdailySealseStats } from "./pack.inteface";
 
 const packSchema = new Schema<IPack>(
     {
@@ -37,6 +37,23 @@ const PackPurchaseSchema = new Schema<IPackPurchase>(
     },
     { timestamps: true, versionKey: false }
 )
+
+const dailySealseStats = new Schema<TdailySealseStats>({
+  producerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  date: { type: String, required: true },
+  downloads: { type: Number, default: 0 },
+  day: {
+    type: String,
+    enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    required: true,
+  },
+}, {
+  timestamps: true,
+  versionKey: false
+});
+
+
+export const DailySealseStats = model('DailySealseStats', dailySealseStats);
 
 export const PackPurchase = model<IPackPurchase>("PackPurchase", PackPurchaseSchema)
 
