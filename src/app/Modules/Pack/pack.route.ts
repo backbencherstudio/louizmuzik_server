@@ -28,5 +28,7 @@ router.get('/packPurchase/:userId', packController.getSingleUserALlPurchaseDataF
 
 router.delete('/:packId', packController.deleteSinglePackByUser)
 
+router.get('/dailyPackSealseForEachProducer/:producerId', packController.DailyPackSealseForEachProducer)
+
 
 export const pactRoute = router

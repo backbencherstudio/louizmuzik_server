@@ -339,7 +339,11 @@ const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
   return result;
 };
 
-
+// ========== for dashboard ========= 
+const DailyPackSealseForEachProducer = async (producerId: string) => {
+  const result = await DailySealseStats.find({ producerId }).sort({ createdAt: -1 });
+  return result
+}
 
 export const packService = {
   createPackIntoDB,
@@ -350,5 +354,6 @@ export const packService = {
   getSinglePackAndAllPackEachUser,
   deleteSinglePackByUser,
   packPurchaseDataStoreIntoDB,
-  getSingleUserALlPurchaseDataFormDB
+  getSingleUserALlPurchaseDataFormDB,
+  DailyPackSealseForEachProducer
 }

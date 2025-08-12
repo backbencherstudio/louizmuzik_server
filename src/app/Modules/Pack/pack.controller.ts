@@ -267,6 +267,16 @@ const getSingleUserALlPurchaseDataFormDB = catchAsync(async (req, res) => {
     });
 });
 
+const DailyPackSealseForEachProducer = catchAsync(async (req, res) => {
+    const result = await packService.DailyPackSealseForEachProducer(req.params.producerId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Daily Pack Sealse For Each Producer',
+        data: result,
+    });
+});
+
 
 export const packController = {
     getAllPackFromDB,
@@ -277,5 +287,6 @@ export const packController = {
     getSinglePackAndAllPackEachUser,
     deleteSinglePackByUser,
     packPurchaseDataStoreIntoDB,
-    getSingleUserALlPurchaseDataFormDB
+    getSingleUserALlPurchaseDataFormDB,
+    DailyPackSealseForEachProducer
 }
