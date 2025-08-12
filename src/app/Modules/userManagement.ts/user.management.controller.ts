@@ -179,6 +179,16 @@ const singleUserBillingHistory = catchAsync(async (req, res) => {
   });
 });
 
+const singleUserSaleseHistory = catchAsync(async (req, res) => {
+  const result = await UserManagement.singleUserSaleseHistory( req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'single user sales History get successfully',
+    data: result,
+  });
+});
+
 
 
 export const UserManagementController = {
@@ -191,5 +201,6 @@ export const UserManagementController = {
   singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
   favoritesMelodyAndFavouritePackForEachUser,
   addPaypalEmail,
-  singleUserBillingHistory
+  singleUserBillingHistory,
+  singleUserSaleseHistory
 }

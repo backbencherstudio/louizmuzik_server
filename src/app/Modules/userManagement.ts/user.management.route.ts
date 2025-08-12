@@ -52,8 +52,13 @@ router.patch(
 );
 
 router.get(
-  '/billingHistory/:userId',  //  producer paypal email ( current user id )
+  '/billingHistory/:userId',  
   UserManagementController.singleUserBillingHistory,
+);
+
+router.get(
+  '/singleUserSaleseHistory/:userId',  
+  UserManagementController.singleUserSaleseHistory,
 );
 
 

@@ -201,8 +201,13 @@ const addPaypalEmail = async (payload: string, userId: string) => {
 }
 
 
-const singleUserBillingHistory = async(userId :string) =>{
-  const result = await Transactions.find({userId}).sort({createdAt : -1})
+const singleUserBillingHistory = async (userId: string) => {
+  const result = await Transactions.find({ userId, salesAmount: { $eq: 0 }, }).sort({ createdAt: -1 })
+  return result
+}
+
+const singleUserSaleseHistory = async (userId: string) => {
+  const result = await Transactions.find({ userId, salesAmount: { $gt: 0 }, }).sort({ createdAt: -1 })
   return result
 }
 
@@ -217,5 +222,6 @@ export const UserManagement = {
   singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
   favoritesMelodyAndFavouritePackForEachUser,
   addPaypalEmail,
-  singleUserBillingHistory
+  singleUserBillingHistory,
+  singleUserSaleseHistory
 }
