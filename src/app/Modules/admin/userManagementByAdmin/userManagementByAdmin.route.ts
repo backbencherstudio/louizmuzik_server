@@ -19,6 +19,11 @@ router.delete(
   adminUserController.deleteUser,
 );
 
+router.get(
+  '/billingHistoryForAdmin',
+  adminUserController.billingHistoryForAdmin,
+);
+
 
 
 

@@ -23,6 +23,16 @@ const changeUsersSubscriptionStatus = catchAsync(async (req, res) => {
   });
 });
 
+const billingHistoryForAdmin = catchAsync(async (req, res) => {
+  const result = await adminService.billingHistoryForAdmin();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'get all billing History successfully',
+    data: result,
+  });
+});
+
 const deleteUser = catchAsync(async (req, res) => {
   const result = await adminService.deleteUser(req.params.selectedUser_Id); // selected user _id
   sendResponse(res, {
@@ -36,5 +46,6 @@ const deleteUser = catchAsync(async (req, res) => {
 export const adminUserController = {
     getAllUsrDataByAdminFromDB,
     changeUsersSubscriptionStatus,
+    billingHistoryForAdmin,
     deleteUser
 }

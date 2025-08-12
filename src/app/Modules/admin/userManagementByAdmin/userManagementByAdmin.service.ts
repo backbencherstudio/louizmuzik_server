@@ -3,6 +3,7 @@ import mongoose from "mongoose"
 import { DailyMelodyDownloadStats, Melody } from "../../Melody/melody.module"
 import { Pack, PackPurchase } from "../../Pack/pack.module"
 import { User } from "../../User/user.model"
+import { Transactions } from "../../Payment/payment.module"
 
 const getALlUserByAdmin = async () => {
     // const result = await User.find({role : 'user', isPro : true}).select("-password")
@@ -98,9 +99,15 @@ const deleteUser = async (userId: string) => {
 };
 
 
+const billingHistoryForAdmin = async() =>{
+  const result = await Transactions.find().sort({createdAt : -1})
+  return result
+}
+
 
 export const adminService = {
     getALlUserByAdmin,
     changeUsersSubscriptionStatus,
-    deleteUser
+    deleteUser,
+    billingHistoryForAdmin
 }
