@@ -12,7 +12,7 @@ import { paymentSucceededEmail } from '../../utils/paymentSucceededEmail';
 import { paypalSubscriptionCencelEmailNoti } from '../../utils/paypalSubscriptionCencelEmailNoti';
 import { stripePaymentFailedEmail } from '../../utils/stripePaymentFailedEmail';
 import { paypalPaymentSaleDeniedNotification } from '../../utils/paypalPaymentSaleDeniedNotification';
-import { subscriptionScheduleCanceledEmail } from '../../utils/subscriptionScheduleCanceledEmail';
+
 
 
 // const paypalSubscription = async (amount: number, userEmail: string) => {
@@ -324,6 +324,9 @@ import { subscriptionScheduleCanceledEmail } from '../../utils/subscriptionSched
 const paypalSubscription = async (amount: number, userEmail: string) => {
   const accessToken = await generateAccessToken();
 
+  console.log(userEmail);
+  
+
   try {
     // 1) Find user in DB
     const user = await User.findOne({ email: userEmail });
@@ -333,6 +336,8 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
 
     // If user has NOT used trial before (false or undefined) => giveTrial = true (trial allowed)
     // If user has used trial before (true) => giveTrial = false (no trial)
+    console.log(user.hasUsedTrial);
+    
     let giveTrial = !user.hasUsedTrial;
 
     console.log({ giveTrial });
@@ -936,16 +941,16 @@ const webhookEvent = async (event: any, headers: any) => {
 
     if (event.event_type === "BILLING.SUBSCRIPTION.CANCELLED") {
       const subscriptionId = event.resource.id;
-      const res = await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
+       await User.findOneAndUpdate({ paypalSubscriptionId: subscriptionId }, {
         isPro: false,
         paypalSubscriptionId: null,
         paypalPlanId: null,
         subscribedAmount: 0,
       });
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
-      if (res) {
-        await subscriptionScheduleCanceledEmail(res.email, res.name)
-      }
+      // if (res) {
+      //   await subscriptionScheduleCanceledEmail(res.email, res.name)
+      // }
     }
 
     // =================== subscription canseled or ( amount not available then subscription auto cansel )
