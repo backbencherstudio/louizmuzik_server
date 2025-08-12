@@ -41,7 +41,7 @@ const PackPurchaseSchema = new Schema<IPackPurchase>(
 const dailySealseStats = new Schema<TdailySealseStats>({
   producerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true },
-  downloads: { type: Number, default: 0 },
+  salesCount: { type: Number, default: 0 },
   day: {
     type: String,
     enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],

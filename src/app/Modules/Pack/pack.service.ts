@@ -256,7 +256,7 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
       updateOne: {
         filter: { producerId, date: currentDate },
         update: {
-          $inc: { downloads: salesCount },
+          $inc: { salesCount: salesCount },
           $setOnInsert: { day: currentDay },
         },
         upsert: true,

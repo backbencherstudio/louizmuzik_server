@@ -11,6 +11,7 @@ import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { Melody } from '../Melody/melody.module';
 import { Pack } from '../Pack/pack.module';
+import { Transactions } from '../Payment/payment.module';
 
 const getAbsoluteFilePath = async (dbPath: string) => {
   try {
@@ -200,6 +201,11 @@ const addPaypalEmail = async (payload: string, userId: string) => {
 }
 
 
+const singleUserBillingHistory = async(userId :string) =>{
+  const result = await Transactions.find({userId}).sort({createdAt : -1})
+  return result
+}
+
 
 export const UserManagement = {
   getSingleUserData,
@@ -210,5 +216,6 @@ export const UserManagement = {
   followingUsersAllMelodyAndPack,
   singleUserInfoAndThisUserAllMelodyAndPacksForProfile,
   favoritesMelodyAndFavouritePackForEachUser,
-  addPaypalEmail
+  addPaypalEmail,
+  singleUserBillingHistory
 }

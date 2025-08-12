@@ -40,6 +40,6 @@ export type DayOfWeek = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 export interface TdailySealseStats {
   producerId: Schema.Types.ObjectId;
   date: string; 
-  downloads: number;
+  salesCount: number;
   day: DayOfWeek;
 }

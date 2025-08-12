@@ -715,6 +715,101 @@ const webhookEvent = async (event: any, headers: any) => {
     console.log("webhook hiiitt");
 
     // ================== when a user purses pack then call this  hook
+    // if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+    //   const resource = event.resource;
+    //   const purchaseUnit = resource.purchase_units?.[0];
+    //   const selectedDataRaw = purchaseUnit?.custom_id || resource?.custom_id;
+    //   let selectedData: any[] = [];
+    //   try {
+    //     selectedData = JSON.parse(selectedDataRaw);
+    //   } catch {
+    //     console.warn("⚠️ Could not parse selectedData");
+    //   }
+
+    //   console.log(selectedData);
+      
+
+    //   const producerIds = selectedData.map((item) =>
+    //     new mongoose.Types.ObjectId(item.selectedProducerId)
+    //   );
+
+    //   const aggregationResult = await User.aggregate([
+    //     {
+    //       $match: {
+    //         _id: { $in: producerIds },
+    //       },
+    //     },
+    //     {
+    //       $addFields: {
+    //         totalPrice: {
+    //           $reduce: {
+    //             input: selectedData,
+    //             initialValue: 0,
+    //             in: {
+    //               $cond: [
+    //                 { $eq: ['$$this.selectedProducerId', { $toString: '$_id' }] },
+    //                 { $add: ['$$value', '$$this.price'] },
+    //                 '$$value',
+    //               ],
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //     {
+    //       $project: {
+    //         _id: 1,
+    //         paypalEmail: 1,
+    //         totalPrice: 1,
+    //       },
+    //     },
+    //   ]);
+
+    //   const payoutList = aggregationResult.map((producer) => {
+    //     const gross = producer.totalPrice || 0;
+    //     const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2)) * 2;
+    //     const afterPaypal = gross - paypalFee;
+    //     const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
+    //     const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
+
+    //     return {
+    //       producerId: producer._id.toString(),
+    //       paypalEmail: producer.paypalEmail,
+    //       grossAmount: gross,
+    //       paypalFee,
+    //       platformFee: serviceFee,
+    //       payoutAmount: payout,
+    //     };
+    //   });
+
+    //   await Promise.all(
+    //     payoutList.map(async (item) => {
+    //       try {
+    //         await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
+    //         const user = await User.findById(item.producerId).select("email fullName _id producer_name");
+
+    //         if (user) {
+    //           const transaction = {
+    //             userId: user._id,
+    //             name: user.producer_name,
+    //             email: user.email,
+    //             salesAmount: item.payoutAmount,
+    //             commission: item.platformFee,
+    //           };
+    //           await Transactions.create(transaction);
+    //           console.log("✅ Transaction recorded for:", user.email);
+    //         } else {
+    //           console.warn("⚠️ User not found for producerId:", item.producerId);
+    //         }
+
+
+    //       } catch (err: any) {
+    //         console.error("❌ Payout or transaction failed:", err.message);
+    //       }
+    //     })
+    //   );
+    // }
+
     if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
       const resource = event.resource;
       const purchaseUnit = resource.purchase_units?.[0];
@@ -724,7 +819,9 @@ const webhookEvent = async (event: any, headers: any) => {
         selectedData = JSON.parse(selectedDataRaw);
       } catch {
         console.warn("⚠️ Could not parse selectedData");
-      }
+      }      
+      // const currentUser = await User.findById(selectedData.userId ).select("email fullName _id producer_name");
+      
 
       const producerIds = selectedData.map((item) =>
         new mongoose.Types.ObjectId(item.selectedProducerId)
@@ -769,7 +866,12 @@ const webhookEvent = async (event: any, headers: any) => {
         const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
         const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
 
+        console.log({producer});
+        
+        const buyerUserId = selectedData?.[0]?.userId || null;
+
         return {
+          userId: buyerUserId.toString(),
           producerId: producer._id.toString(),
           paypalEmail: producer.paypalEmail,
           grossAmount: gross,
@@ -781,9 +883,11 @@ const webhookEvent = async (event: any, headers: any) => {
 
       await Promise.all(
         payoutList.map(async (item) => {
+          console.log({item});
+          
           try {
             await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
-            const user = await User.findById(item.producerId).select("email fullName _id producer_name");
+            const user = await User.findById(item.userId).select("email fullName _id producer_name");
 
             if (user) {
               const transaction = {
@@ -798,6 +902,8 @@ const webhookEvent = async (event: any, headers: any) => {
             } else {
               console.warn("⚠️ User not found for producerId:", item.producerId);
             }
+
+
           } catch (err: any) {
             console.error("❌ Payout or transaction failed:", err.message);
           }

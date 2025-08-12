@@ -51,6 +51,11 @@ router.patch(
   UserManagementController.addPaypalEmail,
 );
 
+router.get(
+  '/billingHistory/:userId',  //  producer paypal email ( current user id )
+  UserManagementController.singleUserBillingHistory,
+);
+
 
 
 
