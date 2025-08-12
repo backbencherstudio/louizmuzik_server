@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from "mongoose"
 import { DailyMelodyDownloadStats, Melody } from "../../Melody/melody.module"
-import { Pack, PackPurchase } from "../../Pack/pack.module"
+import { DailySealseStats, Pack, PackPurchase } from "../../Pack/pack.module"
 import { User } from "../../User/user.model"
 import { Transactions } from "../../Payment/payment.module"
 
@@ -82,6 +82,7 @@ const deleteUser = async (userId: string) => {
         await Melody.deleteMany({ userId }).session(session);
         await Pack.deleteMany({ userId }).session(session);
         await DailyMelodyDownloadStats.deleteMany({ producerId: userId }).session(session);
+        await DailySealseStats.deleteMany({ producerId: userId }).session(session);
         await PackPurchase.deleteMany({ userId }).session(session)
 
         // Finally delete the user
@@ -99,9 +100,9 @@ const deleteUser = async (userId: string) => {
 };
 
 
-const billingHistoryForAdmin = async() =>{
-  const result = await Transactions.find().sort({createdAt : -1})
-  return result
+const billingHistoryForAdmin = async () => {
+    const result = await Transactions.find().sort({ createdAt: -1 })
+    return result
 }
 
 
