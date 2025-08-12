@@ -12,6 +12,7 @@ import { paymentSucceededEmail } from '../../utils/paymentSucceededEmail';
 import { paypalSubscriptionCencelEmailNoti } from '../../utils/paypalSubscriptionCencelEmailNoti';
 import { stripePaymentFailedEmail } from '../../utils/stripePaymentFailedEmail';
 import { paypalPaymentSaleDeniedNotification } from '../../utils/paypalPaymentSaleDeniedNotification';
+import config from '../../config';
 
 
 
@@ -484,8 +485,8 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         application_context: {
           brand_name: 'melody',
           user_action: 'SUBSCRIBE_NOW',
-          return_url: 'http://localhost:3000/success',
-          cancel_url: 'http://localhost:3000/cancel',
+          return_url: `${config.client_base_url}/success`, 
+          cancel_url: `${config.client_base_url}/cancel`,
         },
       },
       {
