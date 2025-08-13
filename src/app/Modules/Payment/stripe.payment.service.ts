@@ -447,7 +447,7 @@ const cancelSubscription = async (req: Request, res: Response) => {
     // Update user state in DB
     await User.findByIdAndUpdate(
       { _id: user._id },
-      { $set: { cancelRequest: true } },
+      { $set: { cancelRequest: true, nextBillingTime : "N/A" } },
       { new: true, runValidators: true }
     );
 
@@ -458,7 +458,7 @@ const cancelSubscription = async (req: Request, res: Response) => {
     if (subscription.status === "trialing") {
       await User.findByIdAndUpdate(
         { _id: user._id },
-        { $set: { isPro: false } },
+        { $set: { isPro: false, nextBillingTime : "N/A" } },
         { new: true, runValidators: true }
       );
     }
@@ -585,6 +585,7 @@ const handlePaymentFailed = async (event: Stripe.Event) => {
   if (email) {
     await User.findOneAndUpdate({ email }, {
       isPro: false,
+      nextBillingTime : "N/A"
     });
 
     await stripePaymentFailedEmail(email)
@@ -633,7 +634,8 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   await User.findByIdAndUpdate({ _id: userId }, {
     isPro: false,
     subscriptionId: null,
-    subscribedAmount: 0
+    subscribedAmount: 0,
+    nextBillingTime : "N/A"
   });
 
   await subscriptionScheduleCanceledEmail(email, name)
@@ -712,15 +714,40 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
 
   console.log({ metadata });
 
+  let nextInvoice = null;
+  if (invoice.subscription && typeof invoice.subscription === "string") {
+    try {
+      nextInvoice = await stripe.invoices.retrieveUpcoming({
+        subscription: invoice.subscription
+      });
+
+      console.log("💰 Next Amount Due:", (nextInvoice.amount_due ?? 0) / 100);
+      console.log("⏳ Next Payment Date:", nextInvoice.next_payment_attempt
+        ? new Date(nextInvoice.next_payment_attempt * 1000)
+        : "N/A");
+    } catch (err) {
+      console.error("Error retrieving next invoice:", err);
+    }
+  }
+
+  let nextBillingTime;
+  if (nextInvoice) {
+    nextBillingTime = nextInvoice.next_payment_attempt
+      ? new Date(nextInvoice.next_payment_attempt * 1000) : "N/A"
+  }
+
+
+
 
   if (userId !== 'N/A') {
     const res = await User.findByIdAndUpdate({ _id: userId }, {
       // isPro: subscription.status === "active",
       isPro: true,
       subscribedAmount: parseFloat(amount),
+      nextBillingTime
     });
 
-
+    
 
     if (invoiceURL && trialUsed === "no") {
       await Transactions.create({

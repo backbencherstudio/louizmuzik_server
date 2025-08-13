@@ -576,6 +576,7 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
     console.log("🛑 Plan deactivated successfully:", planId);
 
     const nextBillingTime = subRes.data.billing_info?.next_billing_time;
+    
     console.log("🕒 Raw nextBillingTime from webhook:", nextBillingTime);
 
     let endDate: Date | null = null;
@@ -588,7 +589,8 @@ const paypalSubscriptionCancel = async (subscriptionId: string) => {
       {
         $set: {
           subscriptionEndDate: endDate,
-          cancelRequest: true
+          cancelRequest: true,
+          nextBillingTime : "N/A"
         },
       },
       { new: true, runValidators: true }
@@ -972,6 +974,16 @@ const webhookEvent = async (event: any, headers: any) => {
         }
       }
 
+      const subRes = await axios.get(
+      `${process.env.PAYPAL_API_BASE}/v1/billing/subscriptions/${subscriptionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    const nextBillingTime = subRes.data.billing_info?.next_billing_time;
+
       await User.findOneAndUpdate(
         { email: subscribedUserData.email },
         {
@@ -979,7 +991,8 @@ const webhookEvent = async (event: any, headers: any) => {
           paypalSubscriptionId: subscriptionId,
           paypalPlanId: planId,
           subscribedAmount: parseInt(amount) | 0,
-          paymentMethod: "paypal"
+          paymentMethod: "paypal",
+          nextBillingTime : nextBillingTime ? nextBillingTime : "N/A"
         },
         { new: true, runValidators: true }
       )
@@ -1053,6 +1066,7 @@ const webhookEvent = async (event: any, headers: any) => {
         paypalSubscriptionId: null,
         paypalPlanId: null,
         subscribedAmount: 0,
+        nextBillingTime : "N/A"
       });
       console.log("❌ Subscription & Plan cancelled:", subscriptionId);
       // if (res) {
@@ -1074,6 +1088,7 @@ const webhookEvent = async (event: any, headers: any) => {
           paypalSubscriptionId: null,
           paypalPlanId: null,
           subscribedAmount: 0,
+          nextBillingTime : "N/A"
         });
 
         try {
@@ -1137,6 +1152,7 @@ const webhookEvent = async (event: any, headers: any) => {
           paypalSubscriptionId: null,
           paypalPlanId: null,
           subscribedAmount: 0,
+          nextBillingTime : "N/A"
         });
 
         // Optional: cancel subscription too

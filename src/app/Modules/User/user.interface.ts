@@ -38,6 +38,7 @@ export interface TUser {
   paymentMethod? : string; 
   subscribedAmount? : number;
   subscriptionEndDate? : Date;
+  nextBillingTime?: Date | string;
 }
 
 // ======================================>>>>>>>> Login Interface
