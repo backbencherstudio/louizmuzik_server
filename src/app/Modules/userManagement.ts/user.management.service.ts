@@ -10,7 +10,7 @@ import { AppError } from '../../errors/AppErrors';
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
 import { Melody } from '../Melody/melody.module';
-import { Pack } from '../Pack/pack.module';
+import { Pack, PackPurchase } from '../Pack/pack.module';
 import { Transactions } from '../Payment/payment.module';
 
 const getAbsoluteFilePath = async (dbPath: string) => {
@@ -206,10 +206,21 @@ const singleUserBillingHistory = async (userId: string) => {
   return result
 }
 
+// const singleUserSaleseHistory = async (userId: string) => {
+//   const result = await PackPurchase.find({ selectedProducerId: userId }).sort({ createdAt: -1 })
+//   return result
+// }
+
 const singleUserSaleseHistory = async (userId: string) => {
-  const result = await Transactions.find({ userId, salesAmount: { $gt: 0 }, }).sort({ createdAt: -1 })
-  return result
-}
+  const result = await PackPurchase.find({ selectedProducerId: userId })
+    .populate("packId", "title price")   
+    .populate("userId", "name email")   
+
+    .sort({ createdAt: -1 });
+
+  return result;
+};
+
 
 
 export const UserManagement = {
