@@ -447,7 +447,7 @@ const cancelSubscription = async (req: Request, res: Response) => {
     // Update user state in DB
     await User.findByIdAndUpdate(
       { _id: user._id },
-      { $set: { cancelRequest: true, nextBillingTime : "N/A" } },
+      { $set: { cancelRequest: true, nextBillingTime: "N/A" } },
       { new: true, runValidators: true }
     );
 
@@ -458,7 +458,7 @@ const cancelSubscription = async (req: Request, res: Response) => {
     if (subscription.status === "trialing") {
       await User.findByIdAndUpdate(
         { _id: user._id },
-        { $set: { isPro: false, nextBillingTime : "N/A" } },
+        { $set: { isPro: false, nextBillingTime: "N/A" } },
         { new: true, runValidators: true }
       );
     }
@@ -585,7 +585,9 @@ const handlePaymentFailed = async (event: Stripe.Event) => {
   if (email) {
     await User.findOneAndUpdate({ email }, {
       isPro: false,
-      nextBillingTime : "N/A"
+      subscriptionId: null,
+      subscribedAmount: 0,
+      nextBillingTime: "N/A"
     });
 
     await stripePaymentFailedEmail(email)
@@ -635,7 +637,7 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
     isPro: false,
     subscriptionId: null,
     subscribedAmount: 0,
-    nextBillingTime : "N/A"
+    nextBillingTime: "N/A"
   });
 
   await subscriptionScheduleCanceledEmail(email, name)
@@ -747,7 +749,7 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
       nextBillingTime
     });
 
-    
+
 
     if (invoiceURL && trialUsed === "no") {
       await Transactions.create({
