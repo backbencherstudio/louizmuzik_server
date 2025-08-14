@@ -87,7 +87,7 @@ const updatePackIntoDB = async (packId: string, payload: Partial<IPack>) => {
 
 
 const getSingleUserAllPackFromDB = async (userId: string) => {
-  const result = await Pack.find({ userId });
+  const result = await Pack.find({ userId }).sort({ createdAt: -1 });
   //   const result = await Pack.find({ userId }).populate('userId', 'profile_image producer_name role email country');
   return result;
 };
@@ -334,7 +334,7 @@ const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
     .populate({
       path: "selectedProducerId",
       select: "producer_name"
-    }).sort({ createdAt : -1 });
+    }).sort({ createdAt: -1 });
 
   return result;
 };
