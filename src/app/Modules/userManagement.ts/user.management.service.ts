@@ -202,7 +202,11 @@ const addPaypalEmail = async (payload: string, userId: string) => {
 
 
 const singleUserBillingHistory = async (userId: string) => {
-  const result = await Transactions.find({ userId, salesAmount: { $eq: 0 }, }).sort({ createdAt: -1 })
+  const result = await Transactions.find(
+    // { userId, salesAmount: { $eq: 0 }, }
+    { userId, salesAmount: { $eq: 0 } },
+    { commission: 0, salesAmount: 0, invoiceURL: 0 }
+  ).sort({ createdAt: -1 })
   return result
 }
 
@@ -213,8 +217,8 @@ const singleUserBillingHistory = async (userId: string) => {
 
 const singleUserSaleseHistory = async (userId: string) => {
   const result = await PackPurchase.find({ selectedProducerId: userId })
-    .populate("packId", "title price")   
-    .populate("userId", "name email")   
+    .populate("packId", "title price")
+    .populate("userId", "name email")
 
     .sort({ createdAt: -1 });
 
