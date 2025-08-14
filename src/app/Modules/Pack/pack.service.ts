@@ -334,7 +334,7 @@ const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
     .populate({
       path: "selectedProducerId",
       select: "producer_name"
-    });
+    }).sort({ createdAt : -1 });
 
   return result;
 };
