@@ -54,6 +54,7 @@ const verifyOtpForResetPassword = catchAsync(async (req, res) => {
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await UserServices.loginUserIntoDB(req.body);
+
   const { refreshToken, accessToken } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'development',
@@ -68,6 +69,7 @@ const loginUser = catchAsync(async (req, res) => {
       accessToken,
     },
   });
+
 });
 
 const refreshToken = catchAsync(async (req, res) => {
@@ -105,11 +107,26 @@ const verifyOTP = catchAsync(async (req, res) => {
 
 const googleLogin = catchAsync(async (req, res) => {
   const result = await UserServices.googleLogin(req.body);
+  // sendResponse(res, {
+  //   statusCode: httpStatus.OK,
+  //   success: true,
+  //   message: 'User Registered successFully',
+  //   data: result,
+  // });
+
+  const { refreshToken, accessToken } = result;
+  res.cookie('refreshToken', refreshToken, {
+    secure: config.NODE_ENV === 'development',
+    httpOnly: true,
+    sameSite: 'none',
+  });
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'User Registered successFully',
-    data: result,
+    message: 'User is loged in successfully',
+    data: {
+      accessToken,
+    },
   });
 });
 
