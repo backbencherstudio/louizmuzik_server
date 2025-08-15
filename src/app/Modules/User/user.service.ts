@@ -215,9 +215,31 @@ const refreshToken = async (token: string) => {
 
 const googleLogin = async (payload: any) => {
   const isUserExists = await User.findOne({ email: payload.email })
+
   if (isUserExists) {
-    return
+    const jwtPayload = {
+      email: isUserExists.email,
+      producer_name: isUserExists.producer_name,
+      userId: isUserExists._id
+    };
+
+    const accessToken = createToken(
+      jwtPayload,
+      config.jwt_access_secret as string,
+      config.jwt_access_expires_in as string,
+    );
+    const refreshToken = createToken(
+      jwtPayload,
+      config.jwt_refresh_secret as string,
+      config.jwt_refresh_expires_in as string,
+    );
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
+
+
   const newUserData = {
     email: payload.email,
     producer_name: payload.producer_name,
@@ -225,7 +247,31 @@ const googleLogin = async (payload: any) => {
     country: "Need to update"
   };
   const result = await User.create(newUserData)
-  return result
+
+  if (result) {
+    const jwtPayload = {
+      email: result.email,
+      producer_name: result.producer_name,
+      userId: result._id
+    };
+
+    const accessToken = createToken(
+      jwtPayload,
+      config.jwt_access_secret as string,
+      config.jwt_access_expires_in as string,
+    );
+    const refreshToken = createToken(
+      jwtPayload,
+      config.jwt_refresh_secret as string,
+      config.jwt_refresh_expires_in as string,
+    );
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+
 }
 
 
