@@ -16,7 +16,7 @@ const createAdmin = async () => {
     email: "admin@gmail.com",
     password: hashedPassword,
     country: "USA",
-    role : "admin"
+    role: "admin"
   }
   const result = await User.create(adminData)
   return result
@@ -213,6 +213,21 @@ const refreshToken = async (token: string) => {
 };
 
 
+const googleLogin = async (payload: any) => {
+  const isUserExists = await User.findOne({ email: payload.email })
+  if (isUserExists) {
+    return
+  }
+  const newUserData = {
+    email: payload.email,
+    password: "",
+    producer_name: payload.producer_name,
+    country: "Need to update"
+  };
+  const result = await User.create(newUserData)
+  return result
+}
+
 
 
 
@@ -225,4 +240,5 @@ export const UserServices = {
   resetPasswordIntoDB,
   updatePasswordWithOtpVerification,
   refreshToken,
+  googleLogin
 };

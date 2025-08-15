@@ -44,6 +44,11 @@ router.post(
   userController.refreshToken,
 );
 
+router.post(
+  '/googleLogin',
+  userController.googleLogin,
+);
+
 
 
 

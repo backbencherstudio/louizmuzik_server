@@ -7,7 +7,7 @@ import config from '../../config';
 
 
 const createAdmin = catchAsync(async (req, res) => {
-  const result = await UserServices.createAdmin();  
+  const result = await UserServices.createAdmin();
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -17,7 +17,7 @@ const createAdmin = catchAsync(async (req, res) => {
 });
 
 const createUser = catchAsync(async (req, res) => {
-  const result = await UserServices.createUserIntoDB(req.body);  
+  const result = await UserServices.createUserIntoDB(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -28,7 +28,7 @@ const createUser = catchAsync(async (req, res) => {
 
 
 const resetPassword = catchAsync(async (req, res) => {
-  const result = await UserServices.resetPasswordIntoDB(req?.body);   
+  const result = await UserServices.resetPasswordIntoDB(req?.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -37,9 +37,9 @@ const resetPassword = catchAsync(async (req, res) => {
   });
 });
 
-const verifyOtpForResetPassword = catchAsync(async (req, res)=>{
-  const getOtpData = req.body;  
-  
+const verifyOtpForResetPassword = catchAsync(async (req, res) => {
+  const getOtpData = req.body;
+
   const result = await UserServices.updatePasswordWithOtpVerification(getOtpData);
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -48,17 +48,17 @@ const verifyOtpForResetPassword = catchAsync(async (req, res)=>{
     data: result,
   });
 
-} )
+})
 
 
 
-const loginUser = catchAsync(async (req, res) => {  
+const loginUser = catchAsync(async (req, res) => {
   const result = await UserServices.loginUserIntoDB(req.body);
   const { refreshToken, accessToken } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'development',
     httpOnly: true,
-    sameSite : 'none',    
+    sameSite: 'none',
   });
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -94,7 +94,17 @@ const userDelete = catchAsync(async (req, res) => {
 
 const verifyOTP = catchAsync(async (req, res) => {
   const { email, otp } = req.body;
-  const result = await UserServices.verifyOTPintoDB(email, otp); 
+  const result = await UserServices.verifyOTPintoDB(email, otp);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Registered successFully',
+    data: result,
+  });
+});
+
+const googleLogin = catchAsync(async (req, res) => {
+  const result = await UserServices.googleLogin(req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -115,4 +125,5 @@ export const userController = {
   refreshToken,
   resetPassword,
   verifyOtpForResetPassword,
+  googleLogin
 };
