@@ -311,6 +311,9 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   };
 
   const result = await User.create(newUserData);
+  if (!result) {
+    throw new AppError(httpStatus.NOT_ACCEPTABLE, "User Not Create")
+  }
 
   const jwtPayload = {
     email: result?.email,
