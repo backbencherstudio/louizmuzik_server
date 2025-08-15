@@ -313,9 +313,9 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   const result = await User.create(newUserData);
 
   const jwtPayload = {
-    email: result.email,
-    producer_name: result.producer_name,
-    userId: result._id,
+    email: result?.email,
+    producer_name: result?.producer_name,
+    userId: result?._id,
   };
 
   const accessToken = createToken(
