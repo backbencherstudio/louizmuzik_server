@@ -220,8 +220,8 @@ const googleLogin = async (payload: any) => {
   }
   const newUserData = {
     email: payload.email,
-    password: "",
     producer_name: payload.producer_name,
+    password: "",
     country: "Need to update"
   };
   const result = await User.create(newUserData)
