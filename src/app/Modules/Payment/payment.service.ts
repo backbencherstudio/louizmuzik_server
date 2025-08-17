@@ -382,7 +382,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         }
 
         // mark hasUsedTrial so user never gets trial again
-        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true });
+        // await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true });
 
         // after cancelling, we will NOT give trial for the new plan
         giveTrial = false;
@@ -390,7 +390,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         console.warn('⚠️ Failed to cancel existing trial subscription:', cancelErr?.response?.data || cancelErr?.message);
         // proceed anyway to create a paid plan (but inform via logs)
         giveTrial = false;
-        await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+        // await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
       }
     }
 
@@ -506,7 +506,7 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
     // 6) If we gave trial, mark hasUsedTrial = true so user cannot get trial again later
     //    If user upgraded and trial was cancelled earlier, already marked true.
     if (giveTrial) {
-      await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
+      // await User.findByIdAndUpdate(user._id, { hasUsedTrial: true }, { new: true, runValidators: true }).catch(() => { });
     }
 
     // 7) Optionally save subscriptionId & planId locally (commented out)
@@ -992,7 +992,8 @@ const webhookEvent = async (event: any, headers: any) => {
           paypalPlanId: planId,
           subscribedAmount: parseInt(amount) | 0,
           paymentMethod: "paypal",
-          nextBillingTime : nextBillingTime ? nextBillingTime : "N/A"
+          nextBillingTime : nextBillingTime ? nextBillingTime : "N/A",
+          hasUsedTrial : true
         },
         { new: true, runValidators: true }
       )

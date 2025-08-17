@@ -184,7 +184,7 @@ const selectFavoriteMelody = async (melodyId: string, userId: string) => {
       { new: true, runValidators: true }
     );
 
-    await Melody.findByIdAndUpdate(
+    await Melody.findByIdAndUpdate( 
       melodyObjectId,
       { $inc: { favorites: -1 } },
       { new: true, runValidators: true }
