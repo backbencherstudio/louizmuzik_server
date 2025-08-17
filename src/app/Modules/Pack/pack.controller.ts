@@ -141,7 +141,7 @@ const updatePackIntoDB = catchAsync(async (req, res) => {
         const uploadParams = {
             Bucket: bucketName,
             Key: key,
-            Body: file,
+            Body: file, 
             ContentType: mimetype,
         };
 
