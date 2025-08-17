@@ -10,13 +10,13 @@ import { AppError } from "../../errors/AppErrors";
 const bucketName = process.env.BUCKET_NAME!;
 
 const s3 = new AWS.S3({
-    region: process.env.REGION!,
-    accessKeyId: process.env.ACCESS_KEY!,
-    secretAccessKey: process.env.ACCESS_SECRET_key!,
-    httpOptions: {
-        timeout: 60 * 60 * 1000, 
-    },
-    maxRetries: 3,
+  region: process.env.REGION!,
+  accessKeyId: process.env.ACCESS_KEY!,
+  secretAccessKey: process.env.ACCESS_SECRET_key!,
+  httpOptions: {
+    timeout: 60 * 60 * 1000,
+  },
+  maxRetries: 3,
 });
 
 
@@ -170,7 +170,7 @@ const addPaypalEmail = catchAsync(async (req, res) => {
 });
 
 const singleUserBillingHistory = catchAsync(async (req, res) => {
-  const result = await UserManagement.singleUserBillingHistory( req.params.userId);
+  const result = await UserManagement.singleUserBillingHistory(req.params.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -180,11 +180,21 @@ const singleUserBillingHistory = catchAsync(async (req, res) => {
 });
 
 const singleUserSaleseHistory = catchAsync(async (req, res) => {
-  const result = await UserManagement.singleUserSaleseHistory( req.params.userId);
+  const result = await UserManagement.singleUserSaleseHistory(req.params.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'single user sales History get successfully',
+    data: result,
+  });
+});
+
+const directSubscription = catchAsync(async (req, res) => {
+  const result = await UserManagement.directSubscription(req.params.userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Direct Subscription',
     data: result,
   });
 });
@@ -202,5 +212,6 @@ export const UserManagementController = {
   favoritesMelodyAndFavouritePackForEachUser,
   addPaypalEmail,
   singleUserBillingHistory,
-  singleUserSaleseHistory
+  singleUserSaleseHistory,
+  directSubscription
 }

@@ -61,6 +61,11 @@ router.get(
   UserManagementController.singleUserSaleseHistory,
 );
 
+router.patch(
+  '/directSubscription/:userId',  
+  UserManagementController.directSubscription,
+);
+
 
 
 

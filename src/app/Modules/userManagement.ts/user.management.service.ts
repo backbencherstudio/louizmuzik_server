@@ -226,6 +226,12 @@ const singleUserSaleseHistory = async (userId: string) => {
 };
 
 
+const directSubscription = async (userId: string) => {
+  const userData = await User.findById({ _id: userId })
+  const result = await User.findByIdAndUpdate({ _id: userId }, { hasUsedTrial: !userData?.hasUsedTrial }, { new: true, runValidators: true })
+  return result
+}
+
 
 export const UserManagement = {
   getSingleUserData,
@@ -238,5 +244,6 @@ export const UserManagement = {
   favoritesMelodyAndFavouritePackForEachUser,
   addPaypalEmail,
   singleUserBillingHistory,
-  singleUserSaleseHistory
+  singleUserSaleseHistory,
+  directSubscription
 }
