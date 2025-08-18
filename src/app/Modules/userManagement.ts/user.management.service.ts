@@ -228,7 +228,7 @@ const singleUserSaleseHistory = async (userId: string) => {
 
 const directSubscription = async (userId: string) => {
   const userData = await User.findById({ _id: userId })
-  const result = await User.findByIdAndUpdate({ _id: userId }, { hasUsedTrial: !userData?.hasUsedTrial }, { new: true, runValidators: true })
+  const result = await User.findByIdAndUpdate({ _id: userId }, { isPro: !userData?.isPro, paymentMethod : "free" }, { new: true, runValidators: true })
   return result
 }
 
