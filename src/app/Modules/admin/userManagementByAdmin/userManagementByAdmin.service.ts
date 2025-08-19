@@ -131,8 +131,32 @@ const adminOverview = async () => {
     ]);
     const subscriptionAmountTotal = totals[0]?.totalSubscription || 0;
     const commissionTotal = totals[0]?.totalCommission || 0;
+    const totalRevenue = subscriptionAmountTotal + commissionTotal;
 
-    const totalRevenue = subscriptionAmountTotal + commissionTotal
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
+
+    const totalsRevenueForThisMonth = await Transactions.aggregate([
+        {
+            $match: {
+                createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalSubscription: { $sum: "$subscriptionAmount" },
+                totalCommission: { $sum: "$commission" }
+            }
+        }
+    ]);
+
+    const subscriptionAmountTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalSubscription || 0;
+    const commissionTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalCommission || 0;
+    const totalRevenueForThisMonth = subscriptionAmountTotalForThisMonth + commissionTotalForThisMonth;
+
+
+
 
     return {
         activeUserCount,
@@ -141,7 +165,8 @@ const adminOverview = async () => {
         uploadedMelody,
         downloadsCount,
         samplePacksSold,
-        totalRevenue
+        totalRevenue,
+        totalRevenueForThisMonth
     }
 }
 
