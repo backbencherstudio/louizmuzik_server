@@ -105,58 +105,130 @@ const billingHistoryForAdmin = async () => {
     return result
 }
 
-const adminOverview = async () => {
-    const activeUserCount = await User.countDocuments({ melodiesCounter: { $gt: 0 } });
-    const isPro = await User.countDocuments({ isPro: true });
-    const freeUser = await User.countDocuments({ isPro: true, paymentMethod: "free" });
-    const uploadedMelody = await Melody.countDocuments();
-    const totalDownloads = await Melody.aggregate([
-        {
-            $group: {
-                _id: null,
-                total: { $sum: "$downloads" }
-            }
-        }
-    ]);
-    const downloadsCount = totalDownloads[0]?.total || 0;
-    const samplePacksSold = await PackPurchase.countDocuments();
-    const totals = await Transactions.aggregate([
-        {
-            $group: {
-                _id: null,
-                totalSubscription: { $sum: "$subscriptionAmount" },
-                totalCommission: { $sum: "$commission" }
-            }
-        }
-    ]);
-    const subscriptionAmountTotal = totals[0]?.totalSubscription || 0;
-    const commissionTotal = totals[0]?.totalCommission || 0;
-    const totalRevenue = subscriptionAmountTotal + commissionTotal;
+// const adminOverview = async () => {
+//     const activeUserCount = await User.countDocuments({ melodiesCounter: { $gt: 0 } });
+//     const isPro = await User.countDocuments({ isPro: true });
+//     const freeUser = await User.countDocuments({ isPro: true, paymentMethod: "free" });
+//     const uploadedMelody = await Melody.countDocuments();
+//     const totalDownloads = await Melody.aggregate([
+//         {
+//             $group: {
+//                 _id: null,
+//                 total: { $sum: "$downloads" }
+//             }
+//         }
+//     ]);
+//     const downloadsCount = totalDownloads[0]?.total || 0;
+//     const samplePacksSold = await PackPurchase.countDocuments();
+//     const totals = await Transactions.aggregate([
+//         {
+//             $group: {
+//                 _id: null,
+//                 totalSubscription: { $sum: "$subscriptionAmount" },
+//                 totalCommission: { $sum: "$commission" }
+//             }
+//         }
+//     ]);
+//     const subscriptionAmountTotal = totals[0]?.totalSubscription || 0;
+//     const commissionTotal = totals[0]?.totalCommission || 0;
+//     const totalRevenue = subscriptionAmountTotal + commissionTotal;
 
+//     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+//     const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
+
+//     const totalsRevenueForThisMonth = await Transactions.aggregate([
+//         {
+//             $match: {
+//                 createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+//             }
+//         },
+//         {
+//             $group: {
+//                 _id: null,
+//                 totalSubscription: { $sum: "$subscriptionAmount" },
+//                 totalCommission: { $sum: "$commission" }
+//             }
+//         }
+//     ]);
+
+//     const subscriptionAmountTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalSubscription || 0;
+//     const commissionTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalCommission || 0;
+//     const totalRevenueForThisMonth = subscriptionAmountTotalForThisMonth + commissionTotalForThisMonth;
+
+
+
+
+//     return {
+//         activeUserCount,
+//         isPro,
+//         freeUser,
+//         uploadedMelody,
+//         downloadsCount,
+//         samplePacksSold,
+//         totalRevenue,
+//         totalRevenueForThisMonth
+//     }
+// }
+
+const adminOverview = async () => {
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1);
 
-    const totalsRevenueForThisMonth = await Transactions.aggregate([
-        {
-            $match: {
-                createdAt: { $gte: startOfMonth, $lt: endOfMonth }
+    const [
+        activeUserCount,
+        isPro,
+        freeUser,
+        uploadedMelody,
+        totalDownloadsAgg,
+        samplePacksSold,
+        totalsRevenue
+    ] = await Promise.all([
+        User.countDocuments({ melodiesCounter: { $gt: 0 } }),
+        User.countDocuments({ isPro: true }),
+        User.countDocuments({ isPro: true, paymentMethod: "free" }),
+        Melody.countDocuments(),
+        Melody.aggregate([
+            { $group: { _id: null, total: { $sum: "$downloads" } } }
+        ]),
+        PackPurchase.countDocuments(),
+        Transactions.aggregate([
+            {
+                $facet: {
+                    allTime: [
+                        {
+                            $group: {
+                                _id: null,
+                                totalSubscription: { $sum: "$subscriptionAmount" },
+                                totalCommission: { $sum: "$commission" }
+                            }
+                        }
+                    ],
+                    thisMonth: [
+                        {
+                            $match: { createdAt: { $gte: startOfMonth, $lt: endOfMonth } }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalSubscription: { $sum: "$subscriptionAmount" },
+                                totalCommission: { $sum: "$commission" }
+                            }
+                        }
+                    ]
+                }
             }
-        },
-        {
-            $group: {
-                _id: null,
-                totalSubscription: { $sum: "$subscriptionAmount" },
-                totalCommission: { $sum: "$commission" }
-            }
-        }
+        ])
     ]);
 
-    const subscriptionAmountTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalSubscription || 0;
-    const commissionTotalForThisMonth = totalsRevenueForThisMonth[0]?.totalCommission || 0;
+    const downloadsCount = totalDownloadsAgg[0]?.total || 0;
+
+    const subscriptionAmountTotal = totalsRevenue[0].allTime[0]?.totalSubscription || 0;
+    const commissionTotal = totalsRevenue[0].allTime[0]?.totalCommission || 0;
+    const totalRevenue = subscriptionAmountTotal + commissionTotal;
+
+    const subscriptionAmountTotalForThisMonth = totalsRevenue[0].thisMonth[0]?.totalSubscription || 0;
+    const commissionTotalForThisMonth = totalsRevenue[0].thisMonth[0]?.totalCommission || 0;
     const totalRevenueForThisMonth = subscriptionAmountTotalForThisMonth + commissionTotalForThisMonth;
-
-
-
 
     return {
         activeUserCount,
@@ -167,8 +239,8 @@ const adminOverview = async () => {
         samplePacksSold,
         totalRevenue,
         totalRevenueForThisMonth
-    }
-}
+    };
+};
 
 
 export const adminService = {
