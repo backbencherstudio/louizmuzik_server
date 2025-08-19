@@ -24,6 +24,11 @@ router.get(
   adminUserController.billingHistoryForAdmin,
 );
 
+router.get(
+  '/adminOverview',
+  adminUserController.adminOverview,
+);
+
 
 
 

@@ -105,10 +105,51 @@ const billingHistoryForAdmin = async () => {
     return result
 }
 
+const adminOverview = async () => {
+    const activeUserCount = await User.countDocuments({ melodiesCounter: { $gt: 0 } });
+    const isPro = await User.countDocuments({ isPro: true });
+    const freeUser = await User.countDocuments({ isPro: true, paymentMethod: "free" });
+    const uploadedMelody = await Melody.countDocuments();
+    const totalDownloads = await Melody.aggregate([
+        {
+            $group: {
+                _id: null,
+                total: { $sum: "$downloads" }
+            }
+        }
+    ]);
+    const downloadsCount = totalDownloads[0]?.total || 0;
+    const samplePacksSold = await PackPurchase.countDocuments();
+    const totals = await Transactions.aggregate([
+        {
+            $group: {
+                _id: null,
+                totalSubscription: { $sum: "$subscriptionAmount" },
+                totalCommission: { $sum: "$commission" }
+            }
+        }
+    ]);
+    const subscriptionAmountTotal = totals[0]?.totalSubscription || 0;
+    const commissionTotal = totals[0]?.totalCommission || 0;
+
+    const totalRevenue = subscriptionAmountTotal + commissionTotal
+
+    return {
+        activeUserCount,
+        isPro,
+        freeUser,
+        uploadedMelody,
+        downloadsCount,
+        samplePacksSold,
+        totalRevenue
+    }
+}
+
 
 export const adminService = {
     getALlUserByAdmin,
     changeUsersSubscriptionStatus,
     deleteUser,
-    billingHistoryForAdmin
+    billingHistoryForAdmin,
+    adminOverview
 }

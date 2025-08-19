@@ -78,7 +78,7 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
       { new: true, runValidators: true }
     );
 
-    await User.findByIdAndUpdate(
+    await User.findByIdAndUpdate( 
       producerUserObjectId,
       { $inc: { followersCounter: -1 } },
       { new: true, runValidators: true }
@@ -164,7 +164,7 @@ const singleUserInfoAndThisUserAllMelodyAndPacksForProfile = async (userId: stri
     userId: { $in: currentUser?._id }
   }).populate('userId', 'profile_image producer_name email');
 
-  return {
+  return { 
     userData: currentUser,
     melodies,
     packs

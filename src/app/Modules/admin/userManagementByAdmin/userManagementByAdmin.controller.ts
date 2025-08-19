@@ -43,9 +43,20 @@ const deleteUser = catchAsync(async (req, res) => {
   });
 });
 
+const adminOverview = catchAsync(async (req, res) => {
+  const result = await adminService.adminOverview(); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "admin overview data for dashboard" ,
+    data: result,
+  });
+});
+
 export const adminUserController = {
     getAllUsrDataByAdminFromDB,
     changeUsersSubscriptionStatus,
     billingHistoryForAdmin,
-    deleteUser
+    deleteUser,
+    adminOverview
 }

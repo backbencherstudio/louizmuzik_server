@@ -57,7 +57,7 @@ const updateUserData = catchAsync(async (req, res) => {
         }).promise();
       }
       const uploadResult = await s3.upload({
-        Bucket: bucketName,
+        Bucket: bucketName, 
         Key: s3Key,
         Body: file.buffer,
         ContentType: file.mimetype,
@@ -68,7 +68,7 @@ const updateUserData = catchAsync(async (req, res) => {
       console.error("S3 upload/delete error:", err);
       throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "S3 error");
     }
-  } else {
+  } else { 
     newProfileImageUrl = user.profile_image;
   }
   const updatedData = {

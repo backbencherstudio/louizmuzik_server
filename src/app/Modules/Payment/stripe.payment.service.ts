@@ -735,7 +735,7 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   let nextBillingTime;
   if (nextInvoice) {
     nextBillingTime = nextInvoice.next_payment_attempt
-      ? new Date(nextInvoice.next_payment_attempt * 1000) : "N/A"
+      ? new Date(nextInvoice.next_payment_attempt * 1000) : "N/A" 
   }
 
 
