@@ -105,11 +105,28 @@ const deleteUser = async (userId: string) => {
 //     return result
 // }
 
+// const billingHistoryForAdmin = async () => {
+//     const result = await Transactions.find()
+//         .populate({
+//             path: "packId",
+//             select: "title userId",
+//             strictPopulate: false 
+//         })
+//         .sort({ createdAt: -1 });
+
+//     return result;
+// };
+
 const billingHistoryForAdmin = async () => {
     const result = await Transactions.find()
         .populate({
             path: "packId",
-            strictPopulate: false 
+            select: "title userId", 
+            populate: {
+                path: "userId", 
+                select: "email", 
+            },
+            strictPopulate: false,  // ignore if packId missing
         })
         .sort({ createdAt: -1 });
 
