@@ -242,45 +242,46 @@ const adminOverview = async () => {
     };
 };
 
+
 const singleUserInformationForAdmin = async (userId: string) => {
+    const objectId = new mongoose.Types.ObjectId(userId);
+
     const melodyData = await Melody.aggregate([
-        { $match: { userId: userId } }, // filter by userId
+        { $match: { userId: objectId } },
         {
             $group: {
                 _id: null,
-                totalMelodies: { $sum: 1 },       // count total melodies
-                totalPlays: { $sum: "$plays" },   // sum plays
-                totalDownloads: { $sum: "$downloads" } // sum downloads
+                totalMelodies: { $sum: 1 },
+                totalPlays: { $sum: "$plays" },
+                totalDownloads: { $sum: "$downloads" }
             }
         }
     ]);
 
-    const packData = await Melody.countDocuments();
+    const packData = await Melody.countDocuments({ userId: objectId });
 
-    const packSoldData = await Transactions.aggregate([
+    const packSoldData = await PackPurchase.aggregate([
         {
             $match: {
-                userId: userId,
-                salesAmount: { $gt: 0 }
+                selectedProducerId: objectId,
+                price: { $gt: 0 }
             }
         },
         {
             $group: {
                 _id: null,
-                totalSalesAmount: { $sum: "$salesAmount" },
-                totalTransactions: { $sum: 1 } 
+                totalSalesAmount: { $sum: "$price" },
             }
         }
     ]);
 
     return {
         melodyStatus: melodyData[0] || { totalMelodies: 0, totalPlays: 0, totalDownloads: 0 },
-        packSoldStatus: packSoldData[0] || { totalSalesAmount: 0, totalTransactions: 0 },
+        packSoldStatus: packSoldData[0] || { totalSalesAmount: 0 },
         totalPack: packData
     }
+};
 
-
-}
 
 
 export const adminService = {
