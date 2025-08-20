@@ -307,7 +307,8 @@ const stripeSubscription = async (
             subscribedAmount: amount,
             hasUsedTrial: true,
             cancelRequest: false,
-            paymentMethod: "stripe"
+            paymentMethod: "stripe",
+            membershipDate : new Date()
           },
         },
         { new: true, runValidators: true }

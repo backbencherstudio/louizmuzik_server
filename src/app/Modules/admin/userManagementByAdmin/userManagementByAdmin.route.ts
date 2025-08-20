@@ -29,6 +29,11 @@ router.get(
   adminUserController.adminOverview,
 );
 
+router.get(
+  '/singleUserInformationForAdmin/:userId',
+  adminUserController.singleUserInformationForAdmin,
+);
+
 
 
 

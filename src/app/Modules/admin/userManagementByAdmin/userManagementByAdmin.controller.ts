@@ -53,10 +53,21 @@ const adminOverview = catchAsync(async (req, res) => {
   });
 });
 
+const singleUserInformationForAdmin = catchAsync(async (req, res) => {
+  const result = await adminService.singleUserInformationForAdmin(req.params.userId); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "get single User Information For Admin" ,
+    data: result,
+  });
+});
+
 export const adminUserController = {
     getAllUsrDataByAdminFromDB,
     changeUsersSubscriptionStatus,
     billingHistoryForAdmin,
     deleteUser,
-    adminOverview
+    adminOverview,
+    singleUserInformationForAdmin
 }

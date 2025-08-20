@@ -242,7 +242,45 @@ const adminOverview = async () => {
     };
 };
 
+const singleUserInformationForAdmin = async (userId: string) => {
+    const melodyData = await Melody.aggregate([
+        { $match: { userId: userId } }, // filter by userId
+        {
+            $group: {
+                _id: null,
+                totalMelodies: { $sum: 1 },       // count total melodies
+                totalPlays: { $sum: "$plays" },   // sum plays
+                totalDownloads: { $sum: "$downloads" } // sum downloads
+            }
+        }
+    ]);
 
+    const packData = await Melody.countDocuments();
+
+    const packSoldData = await Transactions.aggregate([
+        {
+            $match: {
+                userId: userId,
+                salesAmount: { $gt: 0 }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalSalesAmount: { $sum: "$salesAmount" },
+                totalTransactions: { $sum: 1 } 
+            }
+        }
+    ]);
+
+    return {
+        melodyStatus: melodyData[0] || { totalMelodies: 0, totalPlays: 0, totalDownloads: 0 },
+        packSoldStatus: packSoldData[0] || { totalSalesAmount: 0, totalTransactions: 0 },
+        totalPack: packData
+    }
+
+
+}
 
 
 export const adminService = {
@@ -250,5 +288,6 @@ export const adminService = {
     changeUsersSubscriptionStatus,
     deleteUser,
     billingHistoryForAdmin,
-    adminOverview
+    adminOverview,
+    singleUserInformationForAdmin
 }

@@ -98,6 +98,7 @@ const userSchema = new Schema<TUser>(
     subscriptionId: { type: String },
     subscribedAmount: { type: Number },
     subscriptionEndDate: { type: Date },
+    membershipDate: { type: Date },
     nextBillingTime: { type: mongoose.Schema.Types.Mixed },
 
   },

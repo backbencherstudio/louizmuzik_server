@@ -993,7 +993,8 @@ const webhookEvent = async (event: any, headers: any) => {
           subscribedAmount: parseInt(amount) | 0,
           paymentMethod: "paypal",
           nextBillingTime : nextBillingTime ? nextBillingTime : "N/A",
-          hasUsedTrial : true
+          hasUsedTrial : true,
+          membershipDate : new Date()
         },
         { new: true, runValidators: true }
       )
