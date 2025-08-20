@@ -19,7 +19,7 @@ const s3 = new AWS.S3({
 });
 
 const getAllMelodyes = async () => {
-  const result = await Melody.find();
+  const result = await Melody.find().populate("userId");
   return result
 }
 
