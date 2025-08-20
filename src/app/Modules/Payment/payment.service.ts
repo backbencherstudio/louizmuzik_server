@@ -13,6 +13,7 @@ import { paypalSubscriptionCencelEmailNoti } from '../../utils/paypalSubscriptio
 import { stripePaymentFailedEmail } from '../../utils/stripePaymentFailedEmail';
 import { paypalPaymentSaleDeniedNotification } from '../../utils/paypalPaymentSaleDeniedNotification';
 import config from '../../config';
+import { Pack } from '../Pack/pack.module';
 
 
 
@@ -812,106 +813,213 @@ const webhookEvent = async (event: any, headers: any) => {
     //   );
     // }
 
-    if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
-      const resource = event.resource;
-      const purchaseUnit = resource.purchase_units?.[0];
-      const selectedDataRaw = purchaseUnit?.custom_id || resource?.custom_id;
-      let selectedData: any[] = [];
-      try {
-        selectedData = JSON.parse(selectedDataRaw);
-      } catch {
-        console.warn("⚠️ Could not parse selectedData");
-      }      
-      // const currentUser = await User.findById(selectedData.userId ).select("email fullName _id producer_name");
+    // if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+    //   const resource = event.resource;
+    //   const purchaseUnit = resource.purchase_units?.[0];
+    //   const selectedDataRaw = purchaseUnit?.custom_id || resource?.custom_id;
+    //   let selectedData: any[] = [];
+    //   try {
+    //     selectedData = JSON.parse(selectedDataRaw);
+    //   } catch {
+    //     console.warn("⚠️ Could not parse selectedData");
+    //   }      
+    //   // const currentUser = await User.findById(selectedData.userId ).select("email fullName _id producer_name");
       
 
-      const producerIds = selectedData.map((item) =>
-        new mongoose.Types.ObjectId(item.selectedProducerId)
-      );
+    //   const producerIds = selectedData.map((item) =>
+    //     new mongoose.Types.ObjectId(item.selectedProducerId)
+    //   );
 
-      const aggregationResult = await User.aggregate([
-        {
-          $match: {
-            _id: { $in: producerIds },
-          },
-        },
-        {
-          $addFields: {
-            totalPrice: {
-              $reduce: {
-                input: selectedData,
-                initialValue: 0,
-                in: {
-                  $cond: [
-                    { $eq: ['$$this.selectedProducerId', { $toString: '$_id' }] },
-                    { $add: ['$$value', '$$this.price'] },
-                    '$$value',
-                  ],
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            paypalEmail: 1,
-            totalPrice: 1,
-          },
-        },
-      ]);
+    //   const aggregationResult = await User.aggregate([
+    //     {
+    //       $match: {
+    //         _id: { $in: producerIds },
+    //       },
+    //     },
+    //     {
+    //       $addFields: {
+    //         totalPrice: {
+    //           $reduce: {
+    //             input: selectedData,
+    //             initialValue: 0,
+    //             in: {
+    //               $cond: [
+    //                 { $eq: ['$$this.selectedProducerId', { $toString: '$_id' }] },
+    //                 { $add: ['$$value', '$$this.price'] },
+    //                 '$$value',
+    //               ],
+    //             },
+    //           },
+    //         },
+    //       },
+    //     },
+    //     {
+    //       $project: {
+    //         _id: 1,
+    //         paypalEmail: 1,
+    //         totalPrice: 1,
+    //       },
+    //     },
+    //   ]);
 
-      const payoutList = aggregationResult.map((producer) => {
-        const gross = producer.totalPrice || 0;
-        const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2)) * 2;
-        const afterPaypal = gross - paypalFee;
-        const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
-        const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
+    //   const payoutList = aggregationResult.map((producer) => {
+    //     const gross = producer.totalPrice || 0;
+    //     const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2)) * 2;
+    //     const afterPaypal = gross - paypalFee;
+    //     const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
+    //     const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
 
-        console.log({producer});
+    //     console.log({producer});
         
-        const buyerUserId = selectedData?.[0]?.userId || null;
+    //     const buyerUserId = selectedData?.[0]?.userId || null;
 
-        return {
-          userId: buyerUserId.toString(),
-          producerId: producer._id.toString(),
-          paypalEmail: producer.paypalEmail,
-          grossAmount: gross,
-          paypalFee,
-          platformFee: serviceFee,
-          payoutAmount: payout,
-        };
-      });
+    //     return {
+    //       userId: buyerUserId.toString(),
+    //       producerId: producer._id.toString(),
+    //       paypalEmail: producer.paypalEmail,
+    //       grossAmount: gross,
+    //       paypalFee,
+    //       platformFee: serviceFee,
+    //       payoutAmount: payout,
+    //     };
+    //   });
 
-      await Promise.all(
-        payoutList.map(async (item) => {
-          console.log({item});
+    //   await Promise.all(
+    //     payoutList.map(async (item) => {
+    //       console.log({item});
           
-          try {
-            await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
-            const user = await User.findById(item.userId).select("email fullName _id producer_name");
+    //       try {
+    //         await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
+    //         const user = await User.findById(item.userId).select("email fullName _id producer_name");
 
-            if (user) {
-              const transaction = {
-                userId: user._id,
-                name: user.producer_name,
-                email: user.email,
-                salesAmount: item.payoutAmount,
-                commission: item.platformFee,
-              };
-              await Transactions.create(transaction);
-              console.log("✅ Transaction recorded for:", user.email);
-            } else {
-              console.warn("⚠️ User not found for producerId:", item.producerId);
-            }
+    //         if (user) {
+    //           const transaction = {
+    //             userId: user._id,
+    //             name: user.producer_name,
+    //             email: user.email,
+    //             salesAmount: item.payoutAmount,
+    //             commission: item.platformFee,
+    //           };
+    //           await Transactions.create(transaction);
+    //           console.log("✅ Transaction recorded for:", user.email);
+    //         } else {
+    //           console.warn("⚠️ User not found for producerId:", item.producerId);
+    //         }
 
 
-          } catch (err: any) {
-            console.error("❌ Payout or transaction failed:", err.message);
-          }
-        })
-      );
+    //       } catch (err: any) {
+    //         console.error("❌ Payout or transaction failed:", err.message);
+    //       }
+    //     })
+    //   );
+
+      
+    // }
+
+interface ProducerUser {
+  _id: string;
+  producer_name: string;
+  paypalEmail: string;
+  email: string;
+}
+
+interface PopulatedPack {
+  _id: string;
+  name: string;
+  price: number;
+  userId: ProducerUser; // after populate
+}
+
+
+  if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
+    const resource = event.resource;
+    const purchaseUnit = resource.purchase_units?.[0];
+    const selectedDataRaw = purchaseUnit?.custom_id || resource?.custom_id;
+
+    let selectedData: { userId: string; packId: string }[] = [];
+    try {
+      selectedData = JSON.parse(selectedDataRaw);
+    } catch {
+      console.warn("⚠️ Could not parse selectedData");
     }
+
+    console.log(selectedData);
+    
+
+    // 🟢 Step 1: Fetch Pack data with producer info
+    const packIds = selectedData.map(
+      (item) => new mongoose.Types.ObjectId(item.packId)
+    );
+
+    const packs = await Pack.find({ _id: { $in: packIds } })
+      .populate<{ userId: ProducerUser }>(
+        "userId",
+        "paypalEmail producer_name email"
+      )
+      .lean<PopulatedPack[]>();
+
+    // 🟢 Step 2: Build payout list
+    const payoutList = packs.map((pack) => {
+      const producer = pack.userId;
+      const buyerUserId = selectedData?.[0]?.userId || null;
+
+      const gross = pack.price || 0;
+      const paypalFee = parseFloat((gross * 0.029 + 0.3).toFixed(2)) * 2;
+      const afterPaypal = gross - paypalFee;
+      const serviceFee = parseFloat((afterPaypal * 0.03).toFixed(2));
+      const payout = parseFloat((afterPaypal - serviceFee).toFixed(2));
+
+      return {
+        userId: buyerUserId?.toString(),
+        producerId: producer._id.toString(),
+        packId: pack._id.toString(),
+        producerName: producer.producer_name,
+        paypalEmail: producer.paypalEmail,
+        grossAmount: gross,
+        paypalFee,
+        platformFee: serviceFee,
+        payoutAmount: payout,
+      };
+    });
+
+    // 🟢 Step 3: Process payouts
+    await Promise.all(
+      payoutList.map(async (item) => {
+        console.log("item", item);
+        
+        try {
+          await sendPayoutToEmail(item.paypalEmail, item.payoutAmount);
+
+          const user = await User.findById(item.userId).select(
+            "email fullName _id producer_name"
+          );
+
+          if (user) {
+            const transaction = {
+              name: user.producer_name,
+              email: user.email,
+              userId: user._id,
+              packId: item.packId,
+              producerId: item.producerId,
+              salesAmount: item.payoutAmount,
+              commission: item.platformFee,
+              
+            };
+
+            await Transactions.create(transaction);
+            console.log("✅ Transaction recorded for:", user.email);
+          } else {
+            console.warn("⚠️ Buyer not found for:", item.userId);
+          }
+        } catch (err: any) {
+          console.error("❌ Payout or transaction failed:", err.message);
+        }
+      })
+    );
+  };
+
+
+
 
     // =================== this is subscription hook
     if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {

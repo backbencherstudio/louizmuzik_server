@@ -100,10 +100,22 @@ const deleteUser = async (userId: string) => {
 };
 
 
+// const billingHistoryForAdmin = async () => {
+//     const result = await Transactions.find().populate("packId").sort({ createdAt: -1 })
+//     return result
+// }
+
 const billingHistoryForAdmin = async () => {
-    const result = await Transactions.find().sort({ createdAt: -1 })
-    return result
-}
+    const result = await Transactions.find()
+        .populate({
+            path: "packId",
+            strictPopulate: false 
+        })
+        .sort({ createdAt: -1 });
+
+    return result;
+};
+
 
 // const adminOverview = async () => {
 //     const activeUserCount = await User.countDocuments({ melodiesCounter: { $gt: 0 } });

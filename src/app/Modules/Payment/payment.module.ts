@@ -6,6 +6,8 @@ const TransactionsSchema = new Schema<ITransactions>(
         email: { type: String },
         name: { type: String },
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        producerId: { type: Schema.Types.ObjectId, ref: 'User' },
+        packId: { type: Schema.Types.ObjectId, ref: 'Pack' },
         commission: { type: Number },
         subscriptionAmount: { type: Number },
         salesAmount: { type: Number },
