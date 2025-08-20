@@ -30,5 +30,7 @@ router.delete('/:packId', packController.deleteSinglePackByUser)
 
 router.get('/dailyPackSealseForEachProducer/:producerId', packController.DailyPackSealseForEachProducer)
 
+router.patch('/isHighlightPack/:packId', packController.isHighlightPack)
+
 
 export const pactRoute = router

@@ -46,8 +46,8 @@ const createPackIntoDB = catchAsync(async (req, res) => {
             realFilename = (filename as any).filename;
         }
         let cleanFilename = realFilename
-            .replace(/\s+/g, "_") 
-            .replace(/[^a-zA-Z0-9._-]/g, "") 
+            .replace(/\s+/g, "_")
+            .replace(/[^a-zA-Z0-9._-]/g, "")
             .toLowerCase();
         const key = `${Date.now()}-${cleanFilename}`;
         const uploadParams = {
@@ -133,15 +133,15 @@ const updatePackIntoDB = catchAsync(async (req, res) => {
             realFilename = (filename as any).filename;
         }
         let cleanFilename = realFilename
-            .replace(/\s+/g, "_") 
+            .replace(/\s+/g, "_")
             .replace(/[^a-zA-Z0-9._-]/g, "")
-            .toLowerCase(); 
- 
+            .toLowerCase();
+
         const key = `${Date.now()}-${cleanFilename}`;
         const uploadParams = {
             Bucket: bucketName,
             Key: key,
-            Body: file, 
+            Body: file,
             ContentType: mimetype,
         };
 
@@ -181,8 +181,8 @@ const updatePackIntoDB = catchAsync(async (req, res) => {
             }
             const payload = {
                 ...fields,
-                thumbnail_image: thumbnailImageUrl || pack.thumbnail_image, 
-                audio_path: audioPathUrl || pack.audio_path, 
+                thumbnail_image: thumbnailImageUrl || pack.thumbnail_image,
+                audio_path: audioPathUrl || pack.audio_path,
                 zip_path: zipPathUrl || pack.zip_path,
             };
             const result = await packService.updatePackIntoDB(packId, payload);
@@ -277,6 +277,16 @@ const DailyPackSealseForEachProducer = catchAsync(async (req, res) => {
     });
 });
 
+const isHighlightPack = catchAsync(async (req, res) => {
+    const result = await packService.highlightPack(req.params.packId);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: result?.message,
+        data: result?.result,
+    });
+});
+
 
 export const packController = {
     getAllPackFromDB,
@@ -288,5 +298,6 @@ export const packController = {
     deleteSinglePackByUser,
     packPurchaseDataStoreIntoDB,
     getSingleUserALlPurchaseDataFormDB,
-    DailyPackSealseForEachProducer
+    DailyPackSealseForEachProducer,
+    isHighlightPack
 }

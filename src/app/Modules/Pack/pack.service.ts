@@ -345,6 +345,24 @@ const DailyPackSealseForEachProducer = async (producerId: string) => {
   return result
 }
 
+const highlightPack = async (packId: string) => {
+  const packData = await Pack.findById({ _id: packId })
+  const result = await Pack.findByIdAndUpdate({ _id: packId }, { highlight: !packData?.highlight }, { new: true, runValidators: true })
+
+  if (result?.highlight) {
+    return {
+      result,
+      message: "added this pack in the highlight list"
+    }
+  }
+  else {
+    return {
+      result,
+      message: "remove this pack from the highlight list"
+    }
+  }
+}
+
 export const packService = {
   createPackIntoDB,
   updatePackIntoDB,
@@ -355,5 +373,6 @@ export const packService = {
   deleteSinglePackByUser,
   packPurchaseDataStoreIntoDB,
   getSingleUserALlPurchaseDataFormDB,
-  DailyPackSealseForEachProducer
+  DailyPackSealseForEachProducer,
+  highlightPack
 }
