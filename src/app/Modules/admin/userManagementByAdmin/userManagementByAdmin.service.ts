@@ -126,7 +126,7 @@ const billingHistoryForAdmin = async () => {
                 path: "userId", 
                 select: "email", 
             },
-            strictPopulate: false,  // ignore if packId missing
+            strictPopulate: false,
         })
         .sort({ createdAt: -1 });
 
