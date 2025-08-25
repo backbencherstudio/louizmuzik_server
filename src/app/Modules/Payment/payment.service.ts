@@ -1025,9 +1025,9 @@ interface PopulatedPack {
     if (event.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
       const subscriptionId = event.resource.id;
       const planId = event.resource.plan_id;
-      const paypalEmail = event.resource.subscriber.email_address;
+      // const paypalEmail = event.resource.subscriber.email_address;
       const customEmail = event.resource.custom_id;
-      const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
+      // const name = `${event.resource.subscriber.name.given_name} ${event.resource.subscriber.name.surname}`;
       const amount = event.resource.billing_info?.last_payment?.amount?.value;
 
       console.log({ amount });

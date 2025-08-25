@@ -7,6 +7,7 @@ import { TampUserCollection, User } from "./user.model";
 import { TLoginUser, TUser } from "./user.interface";
 import { sendEmail } from "../../utils/sendEmail";
 import { createToken, verifyToken } from "./user.utils";
+import { SignOptions } from "jsonwebtoken";
 
 
 const createAdmin = async () => {
@@ -169,12 +170,12 @@ const loginUserIntoDB = async (paylod: TLoginUser) => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string,
+    config.jwt_access_expires_in as SignOptions["expiresIn"] ,
   );
   const refreshToken = createToken(
     jwtPayload,
     config.jwt_refresh_secret as string,
-    config.jwt_refresh_expires_in as string,
+    config.jwt_access_expires_in as SignOptions["expiresIn"]
   );
   return {
     accessToken,
@@ -204,7 +205,7 @@ const refreshToken = async (token: string) => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string,
+    config.jwt_access_expires_in as SignOptions["expiresIn"]
   );
 
   return {
@@ -292,12 +293,12 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
     const accessToken = createToken(
       jwtPayload,
       config.jwt_access_secret as string,
-      config.jwt_access_expires_in as string,
+      config.jwt_access_expires_in as SignOptions["expiresIn"]
     );
     const refreshToken = createToken(
       jwtPayload,
       config.jwt_refresh_secret as string,
-      config.jwt_refresh_expires_in as string,
+      config.jwt_access_expires_in as SignOptions["expiresIn"]
     );
 
     return { accessToken, refreshToken };
@@ -324,12 +325,12 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string,
+    config.jwt_access_expires_in as SignOptions["expiresIn"]
   );
   const refreshToken = createToken(
     jwtPayload,
     config.jwt_refresh_secret as string,
-    config.jwt_refresh_expires_in as string,
+    config.jwt_access_expires_in as SignOptions["expiresIn"]
   );
 
   return { accessToken, refreshToken };
