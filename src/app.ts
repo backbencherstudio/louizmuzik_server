@@ -13,7 +13,7 @@ const app: Application = express();
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://louiz.s3.us-east-2.amazonaws.com'],
+  origin: ['http://localhost:3000', 'https://louiz.s3.us-east-2.amazonaws.com', 'https://louizmuzik-client.vercel.app'],
   credentials: true,
 }));
 
