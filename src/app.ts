@@ -51,7 +51,7 @@ app.use(express.json());
 app.use('/api/v1', router);
 
 
-app.get('/', (req, res) => res.send({ message: 'Server running successfully!!!' }));
+app.get('/', (req, res) => res.send({ message: 'Server running successfully!!!1111' }));
 
 app.use(globalErrorHandler);
 
