@@ -12,10 +12,23 @@ const app: Application = express();
 
 app.use(cookieParser());
 
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://louizmuzik-client.vercel.app', 'https://louiz.s3.us-east-2.amazonaws.com'],
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: ['http://localhost:3000', 'https://louizmuzik-client.vercel.app', 'https://louiz.s3.us-east-2.amazonaws.com'],
+//   credentials: true,
+// }));
+
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'https://louizmuzik-client.vercel.app'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
 
 // Raw parser BEFORE express.json (Paypal)
 app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }));
