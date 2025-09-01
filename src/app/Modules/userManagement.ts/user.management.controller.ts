@@ -40,6 +40,38 @@ const updateUserData = catchAsync(async (req, res) => {
   const user = await User.findById(userId);
   if (!user) throw new AppError(httpStatus.NOT_FOUND, "User not found");
 
+  // if (file) {
+  //   const cleanFilename = file.originalname
+  //     .replace(/\s+/g, "_")
+  //     .replace(/[^a-zA-Z0-9._-]/g, "")
+  //     .toLowerCase();
+
+  //   const s3Key = `${Date.now()}-${cleanFilename}`;
+
+  //   try {
+  //     if (user.profile_image) {
+  //       console.log(53, user.profile_image);
+
+  //       const oldImageKey = new URL(user.profile_image).pathname.substring(1);
+  //       await s3.deleteObject({
+  //         Bucket: bucketName,
+  //         Key: oldImageKey,
+  //       }).promise();
+  //     }
+  //     const uploadResult = await s3.upload({
+  //       Bucket: bucketName, 
+  //       Key: s3Key,
+  //       Body: file.buffer,
+  //       ContentType: file.mimetype,
+  //     }).promise();
+
+  //     newProfileImageUrl = uploadResult.Location;
+  //   } catch (err) {
+  //     console.error("S3 upload/delete error:", err);
+  //     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "S3 error");
+  //   }
+  // } 
+
   if (file) {
     const cleanFilename = file.originalname
       .replace(/\s+/g, "_")
@@ -49,15 +81,8 @@ const updateUserData = catchAsync(async (req, res) => {
     const s3Key = `${Date.now()}-${cleanFilename}`;
 
     try {
-      if (user.profile_image) {
-        const oldImageKey = new URL(user.profile_image).pathname.substring(1);
-        await s3.deleteObject({
-          Bucket: bucketName,
-          Key: oldImageKey,
-        }).promise();
-      }
       const uploadResult = await s3.upload({
-        Bucket: bucketName, 
+        Bucket: bucketName,
         Key: s3Key,
         Body: file.buffer,
         ContentType: file.mimetype,
@@ -65,10 +90,12 @@ const updateUserData = catchAsync(async (req, res) => {
 
       newProfileImageUrl = uploadResult.Location;
     } catch (err) {
-      console.error("S3 upload/delete error:", err);
-      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "S3 error");
+      console.error("S3 upload error:", err);
+      throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "S3 upload error");
     }
-  } else { 
+  }
+
+  else {
     newProfileImageUrl = user.profile_image;
   }
   const updatedData = {
