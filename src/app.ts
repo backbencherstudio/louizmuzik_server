@@ -21,6 +21,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
+      'https://louizmuzik-client.vercel.app',
       'https://louizmuzik-client.vercel.app'
     ],
     credentials: true,
