@@ -105,7 +105,7 @@ const melodyUpdateByProducer = async (melodyId: string, payload: Partial<Tmelody
 }
 
 const getAllMelodesEachProducer = async (userId: string) => {
-  const result = await Melody.find({ userId })
+  const result = await Melody.find({ userId }).populate('userId')
   return result
 }
 
