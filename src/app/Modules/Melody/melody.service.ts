@@ -80,13 +80,28 @@ const melodyUpdateByProducer = async (melodyId: string, payload: Partial<Tmelody
     }
   }
 
-  const result = await Melody.findByIdAndUpdate(
-    { _id: melodyId },
-    parsedPayload,
-    { runValidators: true, new: true }
-  )
-  return result
+  if (parsedPayload.artistType !== undefined) {
+    if (typeof parsedPayload.artistType === "string") {
+      try {
+        parsedPayload.artistType = JSON.parse(parsedPayload.artistType);
+      } catch (error) {
+        throw new Error("Invalid artistType format. It must be a JSON array string.");
+      }
 
+      if (!Array.isArray(parsedPayload.artistType)) {
+        throw new Error("artistType must be an array.");
+      }
+
+    }
+
+    const result = await Melody.findByIdAndUpdate(
+      { _id: melodyId },
+      parsedPayload,
+      { runValidators: true, new: true }
+    )
+    return result
+
+  }
 }
 
 const getAllMelodesEachProducer = async (userId: string) => {
@@ -184,7 +199,7 @@ const selectFavoriteMelody = async (melodyId: string, userId: string) => {
       { new: true, runValidators: true }
     );
 
-    await Melody.findByIdAndUpdate( 
+    await Melody.findByIdAndUpdate(
       melodyObjectId,
       { $inc: { favorites: -1 } },
       { new: true, runValidators: true }

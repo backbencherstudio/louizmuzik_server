@@ -163,7 +163,7 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
             const payload = {
                 ...fields,
                 image: imageUrl,
-                audioUrl,
+                audioUrl, 
             };
             const result = await melodyService.melodyCreateByProducer(payload);
             sendResponse(res, {
@@ -173,7 +173,7 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
                 data: result,
             });
         } catch (error) {
-            console.error("S3 upload error:", error);
+            console.error(176, "S3 upload error:", error);
             res.status(500).send({ message: "Upload failed", error });
         }
     });
@@ -289,7 +289,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
                 data: result,
             });
         } catch (error) {
-            console.error("S3 upload error:", error);
+            console.error(292, "S3 upload error:", error);
             res.status(500).send({ message: "Upload failed", error });
         }
     });

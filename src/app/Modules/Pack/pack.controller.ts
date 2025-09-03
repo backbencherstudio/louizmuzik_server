@@ -95,7 +95,7 @@ const createPackIntoDB = catchAsync(async (req, res) => {
                 data: result,
             });
         } catch (error) {
-            console.error("S3 upload error:", error);
+            console.error(98, "S3 upload error:", error);
             res.status(500).send({ message: "Upload failed", error });
         }
     });
@@ -193,7 +193,7 @@ const updatePackIntoDB = catchAsync(async (req, res) => {
                 data: result,
             });
         } catch (error) {
-            console.error("S3 upload error:", error);
+            console.error(196 ,"S3 upload error:", error);
             res.status(500).send({ message: "Upload failed", error });
         }
     });
