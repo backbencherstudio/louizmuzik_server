@@ -5,7 +5,7 @@ const MelodySchema = new Schema<Tmelody>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: [true, 'User ID is required'] },
     name: { type: String, required: [true, 'name is required'] },
-    image: { type: String, required: [true, 'Image URL is required'] },
+    image: { type: String},
     audioUrl: { type: String, required: [true, 'Audio URL is required'] },
     producer: { type: String, required: [true, 'Producer name is required'] },
     // waveform: { type: String, required: [true, 'Waveform data is required'] },

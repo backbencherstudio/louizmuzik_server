@@ -4,7 +4,7 @@ export interface Tmelody {
   id: string;
   userId: Schema.Types.ObjectId;
   name: string;
-  image: string;
+  image?: string;
   producer: string;
   // waveform: string;
   bpm: number;

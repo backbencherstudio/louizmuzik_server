@@ -144,14 +144,14 @@ const deleteMelodesEachProducer = async (melodyId: string, userId: string) => {
     return urlObj.pathname.substring(1);
   };
 
-  const imageKey = getS3KeyFromUrl(melodyData.image);
+  // const imageKey = getS3KeyFromUrl(melodyData.image);
   const audioKey = getS3KeyFromUrl(melodyData.audioUrl);
 
   try {
-    if (imageKey) {
-      await s3.deleteObject({ Bucket: bucketName, Key: imageKey }).promise();
-      console.log(`Deleting image file from S3: ${imageKey}`);
-    }
+    // if (imageKey) {
+    //   await s3.deleteObject({ Bucket: bucketName, Key: imageKey }).promise();
+    //   console.log(`Deleting image file from S3: ${imageKey}`);
+    // }
 
     if (audioKey) {
       await s3.deleteObject({ Bucket: bucketName, Key: audioKey }).promise();
