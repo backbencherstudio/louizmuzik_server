@@ -102,7 +102,7 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields: any = {};
     let uploadPromises: Promise<AWS.S3.ManagedUpload.SendData>[] = [];
-    let imageUrl: string | null = null;
+    // let imageUrl: string | null = null;
     let audioUrl: string | null = null;
 
     //  const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024;  
@@ -136,9 +136,10 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
 
         const uploadPromise = s3.upload(uploadParams).promise();
         uploadPromise.then(data => {
-            if (fieldname === 'image') {
-                imageUrl = data.Location;
-            } else if (fieldname === 'audioUrl') {
+            // if (fieldname === 'image') {
+            //     imageUrl = data.Location;
+            // } 
+            if (fieldname === 'audioUrl') {
                 audioUrl = data.Location;
             }
         });
@@ -157,13 +158,12 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
     bb.on("finish", async () => {
         try {
             await Promise.all(uploadPromises);
-            if (!imageUrl || !audioUrl) {
-                return res.status(400).send({ message: "Both image and audio files must be uploaded" });
+            if (!audioUrl) {
+                return res.status(400).send({ message: " audio files must be uploaded" });
             }
             const payload = {
                 ...fields,
-                image: imageUrl,
-                audioUrl, 
+                audioUrl,
             };
             const result = await melodyService.melodyCreateByProducer(payload);
             sendResponse(res, {
