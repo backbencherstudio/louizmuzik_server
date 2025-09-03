@@ -190,9 +190,9 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields: any = {};
     let uploadPromises: Promise<AWS.S3.ManagedUpload.SendData>[] = [];
-    let imageUrl: string | null = null;
+    // let imageUrl: string | null = null;
     let audioUrl: string | null = null;
-    let oldImageUrl: string | null = null;
+    // let oldImageUrl: string | null = null;
     let oldAudioUrl: string | null = null;
 
     // Fetch the existing melody to get current image and audio URLs
@@ -202,7 +202,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
     }
 
     // Store current URLs to delete from S3 later if needed
-    oldImageUrl = melody.image;
+    // oldImageUrl = melody.image;
     oldAudioUrl = melody.audioUrl;
 
     // Function to extract the file key from the full S3 URL
@@ -212,7 +212,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
         const key = urlObj.pathname.substring(1); // Extract the path from the URL, skipping the leading "/"
         return key || null;
     };
-    const oldImageKey = getS3KeyFromUrl(oldImageUrl);
+    // const oldImageKey = getS3KeyFromUrl(oldImageUrl);
     const oldAudioKey = getS3KeyFromUrl(oldAudioUrl);
 
     bb.on("file", (fieldname: any, file: any, filename: any, encoding: any, mimetype: any) => {
@@ -239,9 +239,10 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
 
         const uploadPromise = s3.upload(uploadParams).promise();
         uploadPromise.then(data => {
-            if (fieldname === 'image') {
-                imageUrl = data.Location;
-            } else if (fieldname === 'audioUrl') {
+            // if (fieldname === 'image') {
+            //     imageUrl = data.Location;
+            // } else 
+                if (fieldname === 'audioUrl') {
                 audioUrl = data.Location;
             }
         });
@@ -263,10 +264,10 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
             await Promise.all(uploadPromises);
 
             // Delete the old files from S3, if new files are provided
-            if (oldImageKey && imageUrl) {
-                console.log("Deleting old image from S3:", oldImageKey);
-                await s3.deleteObject({ Bucket: bucketName, Key: oldImageKey }).promise();
-            }
+            // if (oldImageKey && imageUrl) {
+            //     console.log("Deleting old image from S3:", oldImageKey);
+            //     await s3.deleteObject({ Bucket: bucketName, Key: oldImageKey }).promise();
+            // }
 
             if (oldAudioKey && audioUrl) {
                 console.log("Deleting old audio from S3:", oldAudioKey);
@@ -276,7 +277,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
             // Build the update payload with the new values
             const payload = {
                 ...fields,
-                image: imageUrl || melody.image, // If no new image, keep the old one
+                // image: imageUrl || melody.image, // If no new image, keep the old one
                 audioUrl: audioUrl || melody.audioUrl, // If no new audio, keep the old one
             };
 
