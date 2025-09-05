@@ -31,15 +31,15 @@ export interface TUser {
   paypalAccountId?: string; //========== neeed to remove it 
   accessToken?: string;  //========== neeed to remove it 
   paypalEmail?: string;
-  paypalSubscriptionId? : string | null;
-  paypalPlanId? : string | null; 
-  customerId? : string; 
-  subscriptionId? : string; 
-  paymentMethod? : string; 
-  subscribedAmount? : number;
-  subscriptionEndDate? : Date;
+  paypalSubscriptionId?: string | null;
+  paypalPlanId?: string | null;
+  customerId?: string;
+  subscriptionId?: string;
+  paymentMethod?: string;
+  subscribedAmount?: number;
+  subscriptionEndDate?: Date;
   nextBillingTime?: Date | string;
-  membershipDate ?: Date
+  membershipDate?: Date
 }
 
 // ======================================>>>>>>>> Login Interface
@@ -55,6 +55,11 @@ export interface UserModel extends Model<TUser> {
     plainTextPassword: string,
     hashPassword: string,
   ): Promise<boolean>;
+}
+
+export interface IDiscography {
+  userId: string,
+  discographyUrl: string
 }
 
 

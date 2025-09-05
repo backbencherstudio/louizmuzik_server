@@ -116,9 +116,19 @@ userSchema.statics.isPasswordMatched = async function (
   return await bcrypt.compare(plainTextPassword, hashPassword);
 };
 
+export const DiscographySchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  discographyUrl: { type: String, required: true },
+}, {
+  timestamps: true,
+  versionKey: false
+});
+
 
 
 export const TampUserCollection = model<TUser>('TampUser', TampUserSchema);
 
 export const User = model<TUser>('User', userSchema);
+
+export const Discography = model('Discography', DiscographySchema);
 

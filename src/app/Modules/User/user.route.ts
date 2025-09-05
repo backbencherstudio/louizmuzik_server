@@ -49,6 +49,10 @@ router.post(
   userController.googleLogin,
 );
 
+router.post('/createDiscography', userController.createDiscography);
+router.get('/fetchDiscography/:userId', userController.fetchDiscography);
+router.delete('/removeDiscography/:id', userController.removeDiscography);
+
 
 
 

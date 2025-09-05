@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import { AppError } from "../../errors/AppErrors";
 import bcrypt from 'bcrypt';
 import config from "../../config";
-import { TampUserCollection, User } from "./user.model";
+import { Discography, TampUserCollection, User } from "./user.model";
 import { TLoginUser, TUser } from "./user.interface";
 import { sendEmail } from "../../utils/sendEmail";
 import { createToken, verifyToken } from "./user.utils";
@@ -336,6 +336,23 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   return { accessToken, refreshToken };
 };
 
+const discographySet = async (userId: string, discographyUrl : string) => {
+  const result = await Discography.create({ userId, discographyUrl });
+  return result
+}
+
+// GET Service - Fetch user's discography by userId ( each user )
+const getDiscography = async (userId: string) => {
+  const result = await Discography.find({ userId });
+  return result;
+};
+
+// DELETE Service - Delete a specific discography by ID
+const deleteDiscography = async (id: string) => {
+  const result = await Discography.findByIdAndDelete(id);
+  return result;
+};
+
 
 
 
@@ -348,5 +365,8 @@ export const UserServices = {
   resetPasswordIntoDB,
   updatePasswordWithOtpVerification,
   refreshToken,
-  googleLogin
+  googleLogin,
+  discographySet,
+  getDiscography,
+  deleteDiscography 
 };

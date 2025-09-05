@@ -130,6 +130,47 @@ const googleLogin = catchAsync(async (req, res) => {
   });
 });
 
+// discographySet,
+//   getDiscography,
+//   deleteDiscography 
+
+const createDiscography = catchAsync(async (req, res) => {
+  const { userId, discographyUrl } = req.body;
+  const result = await UserServices.discographySet(userId, discographyUrl);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Discography created successfully',
+    data: result,
+  });
+});
+
+// Get Discography (by userId)
+const fetchDiscography = catchAsync(async (req, res) => {
+  const { userId } = req.params;
+  const result = await UserServices.getDiscography(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Discography fetched successfully',
+    data: result,
+  });
+});
+
+// Delete Discography (by ID)
+const removeDiscography = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await UserServices.deleteDiscography(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Discography deleted successfully',
+    data: result,
+  });
+});
 
 
 
@@ -142,5 +183,8 @@ export const userController = {
   refreshToken,
   resetPassword,
   verifyOtpForResetPassword,
-  googleLogin
+  googleLogin,
+  createDiscography,
+  fetchDiscography,
+  removeDiscography 
 };
