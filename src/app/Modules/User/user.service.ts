@@ -170,7 +170,7 @@ const loginUserIntoDB = async (paylod: TLoginUser) => {
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
-    config.jwt_access_expires_in as SignOptions["expiresIn"] ,
+    config.jwt_access_expires_in as SignOptions["expiresIn"],
   );
   const refreshToken = createToken(
     jwtPayload,
@@ -336,7 +336,7 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   return { accessToken, refreshToken };
 };
 
-const discographySet = async (userId: string, discographyUrl : string) => {
+const discographySet = async (userId: string, discographyUrl: string) => {
   const result = await Discography.create({ userId, discographyUrl });
   return result
 }
@@ -349,7 +349,7 @@ const getDiscography = async (userId: string) => {
 
 // DELETE Service - Delete a specific discography by ID
 const deleteDiscography = async (id: string) => {
-  const result = await Discography.findByIdAndDelete(id);
+  const result = await Discography.findByIdAndDelete({ _id: id });
   return result;
 };
 
@@ -368,5 +368,5 @@ export const UserServices = {
   googleLogin,
   discographySet,
   getDiscography,
-  deleteDiscography 
+  deleteDiscography
 };
