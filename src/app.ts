@@ -10,16 +10,20 @@ dotenv.config();
 const app: Application = express();
 
 // ✅ Apply CORS before everything
-app.use(cors({
-  origin: [
-    'https://louizmuzik-client.vercel.app',
-    'http://localhost:3000',
-    'https://louiz.s3.us-east-2.amazonaws.com',
-  ],
-  credentials: true, // Allow credentials (cookies)
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
-}));
+// app.use(cors({
+//   origin: [
+//     'https://louizmuzik-client.vercel.app',
+//     'http://localhost:3000',
+//     'https://louizmuzik-client.vercel.app/',
+//     'https://louiz.s3.us-east-2.amazonaws.com',
+//   ],
+//   credentials: true, // Allow credentials (cookies)
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
+//   allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
+// }));
+
+app.use(cors({ origin: '*' }));
+
 
 app.use(cookieParser());
 
@@ -36,7 +40,7 @@ app.use('/uploads', express.static('uploads'));
 // API routes
 app.use('/api/v1', router);
 
-app.get('/', (req, res) => res.send({ message: 'Server running successfully !!!!!!!!' }));
+app.get('/', (req, res) => res.send({ message: 'Server running successfully 2' }));
 
 // Global error handler
 app.use(globalErrorHandler);
