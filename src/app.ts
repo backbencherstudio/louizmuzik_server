@@ -35,7 +35,7 @@ app.use('/uploads', express.static('uploads'));
 // API routes
 app.use('/api/v1', router);
 
-app.get('/', (req, res) => res.send({ message: 'Server running successfully' }));
+app.get('/', (req, res) => res.send({ message: 'Server running successfully !!' }));
 
 // Global error handler
 app.use(globalErrorHandler);
