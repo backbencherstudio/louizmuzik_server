@@ -22,16 +22,6 @@ const s3 = new AWS.S3({
 });
 
 
-const getAllPackFromDB = catchAsync(async (req, res) => {
-    const result = await packService.getAllPackFromDB();
-    sendResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'get Pack successfully',
-        data: result,
-    });
-});
-
 const createPackIntoDB = catchAsync(async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields: any = {};
@@ -100,6 +90,17 @@ const createPackIntoDB = catchAsync(async (req, res) => {
         }
     });
     req.pipe(bb);
+});
+
+
+const getAllPackFromDB = catchAsync(async (req, res) => {
+    const result = await packService.getAllPackFromDB();
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'get Pack successfully',
+        data: result,
+    });
 });
 
 const updatePackIntoDB = catchAsync(async (req, res) => {

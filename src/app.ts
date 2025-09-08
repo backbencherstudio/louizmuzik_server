@@ -12,17 +12,34 @@ const app: Application = express();
 // ✅ Apply CORS before everything
 // app.use(cors({
 //   origin: [
-//     'https://louizmuzik-client.vercel.app',
 //     'http://localhost:3000',
-//     'https://louizmuzik-client.vercel.app/',
+//     'https://louizmuzik-client.vercel.app',
 //     'https://louiz.s3.us-east-2.amazonaws.com',
 //   ],
 //   credentials: true, // Allow credentials (cookies)
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Specify allowed HTTP methods
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Add 'PATCH' method
 //   allowedHeaders: ['Content-Type', 'Authorization'], // Specify allowed headers
 // }));
 
-app.use(cors({ origin: '*' }));
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests from the specified domains
+    const allowedOrigins = [
+      'https://louizmuzik-client.vercel.app',
+      'http://localhost:3000', // For local development
+    ];
+
+    if ((typeof origin === 'string' && allowedOrigins.includes(origin)) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed by this origin'));
+    }
+  },
+  credentials: true, // Allow cookies
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Ensure PATCH is allowed
+  allowedHeaders: ['Content-Type', 'Authorization'], // Ensure the headers are allowed
+}));
+
 
 
 app.use(cookieParser());
@@ -40,7 +57,7 @@ app.use('/uploads', express.static('uploads'));
 // API routes
 app.use('/api/v1', router);
 
-app.get('/', (req, res) => res.send({ message: 'Server running successfully 2' }));
+app.get('/', (req, res) => res.send({ message: 'Server running successfully !!' }));
 
 // Global error handler
 app.use(globalErrorHandler);
@@ -49,6 +66,29 @@ export default app;
 
 
 
+// [
+//     {
+//         "AllowedHeaders": [
+//             "*"
+//         ],
+//         "AllowedMethods": [
+//             "GET",
+//             "PUT",
+//             "POST",
+//             "DELETE",
+//             "HEAD"
+//         ],
+//         "AllowedOrigins": [
+//             "*"
+//         ],
+//         "ExposeHeaders": [
+//             "ETag",
+//             "x-amz-request-id",
+//             "x-amz-id-2"
+//         ],
+//         "MaxAgeSeconds": 3000
+//     }
+// ]
 
 
 
