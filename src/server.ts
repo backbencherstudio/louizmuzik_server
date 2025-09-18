@@ -36,8 +36,10 @@ async function main() {
     // ⏱️ Set timeout to 1 hour (3600000 ms)
     server.timeout = 60 * 60 * 1000;
 
-    server.listen(config.port, () => {
-      console.log(`Example app listening on PORT === ${config.port}`);
+    const port = process.env.PORT || config.port || 8000
+
+    server.listen(port, () => {
+      console.log(`Example app listening on PORT === ${port}`);
     });
   } catch (error) {
     console.log(error);
