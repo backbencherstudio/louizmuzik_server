@@ -26,15 +26,10 @@ const getAllPackFromDB = async () => {
   return result
 }
 
-// const createPackIntoDB = async (payload: IPack) => {
-//     const result = await Pack.create(payload)
-//     return result
-// }
 
 const createPackIntoDB = async (payload: IPack) => {
   const parsedPayload = { ...payload };
 
-  // Handle genre stringified array
   if (typeof parsedPayload.genre === "string") {
     try {
       parsedPayload.genre = JSON.parse(parsedPayload.genre);
@@ -43,7 +38,6 @@ const createPackIntoDB = async (payload: IPack) => {
     }
   }
 
-  // Ensure it's an array of strings
   if (!Array.isArray(parsedPayload.genre)) {
     throw new Error("Genre must be an array.");
   }
@@ -53,11 +47,6 @@ const createPackIntoDB = async (payload: IPack) => {
 };
 
 
-
-// const updatePackIntoDB = async (packId: string, payload: Partial<IPack>) => {
-//     const result = await Pack.findByIdAndUpdate({ _id: packId }, payload, { runValidators: true, new: true });
-//     return result
-// }
 
 const updatePackIntoDB = async (packId: string, payload: Partial<IPack>) => {
   const parsedPayload = { ...payload };
@@ -88,8 +77,7 @@ const updatePackIntoDB = async (packId: string, payload: Partial<IPack>) => {
 
 const getSingleUserAllPackFromDB = async (userId: string) => {
   const result = await Pack.find({ userId }).sort({ createdAt: -1 });
-  //   const result = await Pack.find({ userId }).populate('userId', 'profile_image producer_name role email country');
-  return result;
+   return result;
 };
 
 
@@ -190,24 +178,16 @@ const deleteSinglePackByUser = async (packId: string) => {
     return true;
   } catch (error) {
     console.error("Error deleting pack files or data:", error);
-    return false; // If there is any error, return false
+    return false; 
   }
 };
 
-
-
-
-// const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {    
-//     const result = await PackPurchase.insertMany(payload)
-//     return result
-// }
 
 const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
   if (!payload || !payload.length) {
     throw new Error("❌ No pack purchase data provided.");
   }
 
-  // 1️⃣ Aggregate sales/profit per pack
   const aggregatedPacks = payload.reduce((acc, item) => {
     const packId = item.packId.toString();
 
@@ -221,7 +201,6 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
     return acc;
   }, {} as Record<string, { salesCount: number; profit: number }>);
 
-  // 2️⃣ Aggregate sales per producer for daily stats
   const aggregatedProducers = payload.reduce((acc, item) => {
     const producerId = item.selectedProducerId.toString();
 
@@ -229,12 +208,11 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
       acc[producerId] = 0;
     }
 
-    acc[producerId] += 1; // Each purchase counts as 1 sale
+    acc[producerId] += 1; 
 
     return acc;
   }, {} as Record<string, number>);
 
-  // 3️⃣ Bulk update packs' sales/profit
   const bulkOps = Object.entries(aggregatedPacks).map(([packId, values]) => ({
     updateOne: {
       filter: { _id: packId },
@@ -247,7 +225,6 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
     },
   }));
 
-  // 4️⃣ Prepare daily sales stats updates for each producer
   const currentDate = dayjs().format("YYYY-MM-DD");
   const currentDay = dayjs().format("ddd");
 
@@ -264,7 +241,6 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
     })
   );
 
-  // 5️⃣ Execute all DB operations
   const [packUpdateResult, purchaseInsertResult, dailyStatsResult] =
     await Promise.all([
       Pack.bulkWrite(bulkOps),
@@ -281,49 +257,6 @@ const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
 };
 
 
-
-// const packPurchaseDataStoreIntoDB = async (payload: IPackPurchase[]) => {
-//   if (!payload || !payload.length) {
-//     throw new Error("❌ No pack purchase data provided.");
-//   }
-
-//   const aggregated = payload.reduce((acc, item) => {
-//     const packId = item.packId.toString();
-
-//     if (!acc[packId]) {
-//       acc[packId] = { salesCount: 0, profit: 0 };
-//     }
-
-//     acc[packId].salesCount += 1;
-//     acc[packId].profit += item.price;
-
-//     return acc;
-//   }, {} as Record<string, { salesCount: number; profit: number }>);
-
-//   const bulkOps = Object.entries(aggregated).map(([packId, values]) => ({
-//     updateOne: {
-//       filter: { _id: packId },
-//       update: {
-//         $inc: {
-//           sales: values.salesCount,
-//           profit: values.profit,
-//         },
-//       },
-//     },
-//   }));
-
-
-
-//   // 3️⃣ Run the updates and insert purchases
-//   const packUpdateResult = await Pack.bulkWrite(bulkOps);
-//   const purchaseInsertResult = await PackPurchase.insertMany(payload);
-
-//   return {
-//     message: "✅ Pack purchases processed successfully.",
-//     updatedPacks: packUpdateResult.modifiedCount,
-//     insertedPurchases: purchaseInsertResult.length,
-//   };
-// };
 
 const getSingleUserALlPurchaseDataFormDB = async (userId: string) => {
   const result = await PackPurchase.find({ userId })

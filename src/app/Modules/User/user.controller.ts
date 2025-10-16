@@ -107,13 +107,6 @@ const verifyOTP = catchAsync(async (req, res) => {
 
 const googleLogin = catchAsync(async (req, res) => {
   const result = await UserServices.googleLogin(req.body);
-  // sendResponse(res, {
-  //   statusCode: httpStatus.OK,
-  //   success: true,
-  //   message: 'User Registered successFully',
-  //   data: result,
-  // });
-
   const { refreshToken, accessToken } = result;
   res.cookie('refreshToken', refreshToken, {
     secure: config.NODE_ENV === 'development',
@@ -129,11 +122,6 @@ const googleLogin = catchAsync(async (req, res) => {
     },
   });
 });
-
-// discographySet,
-//   getDiscography,
-//   deleteDiscography 
-
 const createDiscography = catchAsync(async (req, res) => {
   const { userId, discographyUrl } = req.body;
   const result = await UserServices.discographySet(userId, discographyUrl);
@@ -146,7 +134,6 @@ const createDiscography = catchAsync(async (req, res) => {
   });
 });
 
-// Get Discography (by userId)
 const fetchDiscography = catchAsync(async (req, res) => {
   const { userId } = req.params;
   const result = await UserServices.getDiscography(userId);
@@ -159,7 +146,6 @@ const fetchDiscography = catchAsync(async (req, res) => {
   });
 });
 
-// Delete Discography (by ID)
 const removeDiscography = catchAsync(async (req, res) => {
   const { id } = req.params;
   const result = await UserServices.deleteDiscography(id);

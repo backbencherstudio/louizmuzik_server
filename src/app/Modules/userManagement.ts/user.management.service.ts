@@ -86,7 +86,6 @@ const followingProducersCalculation = async (currentUserId: string, producerUser
 
     return { message: "You have unfollowed this user." };
   } else {
-    //  Follow: add producer ID to currentUser.following & increase producer's followersCounter
     await User.findByIdAndUpdate(
       currentUserObjectId,
       { $addToSet: { following: producerUserObjectId } },
@@ -203,17 +202,11 @@ const addPaypalEmail = async (payload: string, userId: string) => {
 
 const singleUserBillingHistory = async (userId: string) => {
   const result = await Transactions.find(
-    // { userId, salesAmount: { $eq: 0 }, }
     { userId, salesAmount: { $eq: 0 } },
     { commission: 0, salesAmount: 0, invoiceURL: 0 }
   ).sort({ createdAt: -1 })
   return result
 }
-
-// const singleUserSaleseHistory = async (userId: string) => {
-//   const result = await PackPurchase.find({ selectedProducerId: userId }).sort({ createdAt: -1 })
-//   return result
-// }
 
 const singleUserSaleseHistory = async (userId: string) => {
   const result = await PackPurchase.find({ selectedProducerId: userId })

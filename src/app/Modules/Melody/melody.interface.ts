@@ -6,10 +6,8 @@ export interface Tmelody {
   name: string;
   image?: string;
   producer: string;
-  // waveform: string;
   bpm: number;
   key: string;
-  // genre: string;
   genre: string[];
   artistType: string[];
   splitPercentage: number;

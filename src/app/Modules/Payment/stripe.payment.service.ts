@@ -3,7 +3,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Stripe from "stripe";
 import { User } from "../User/user.model";
@@ -47,139 +46,6 @@ const sendEmail = async (
   }
 };
 
-// const stripeSubscription = async (
-//   req: {
-//     body: {
-//       email: string;
-//       amount: number;
-//       paymentMethodId: string;
-//       name: string;
-//       userId: string;
-//     };
-//   },
-//   res: any
-// ) => {
-//   const { email, amount, paymentMethodId, name, userId } = req.body;
-//   if (!email || !amount || !paymentMethodId) {
-//     return res.status(400).send({
-//       error: "Email, amount, and payment method are required.",
-//     });
-//   }
-//   try {
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).send({ error: "User not found." });
-//     }
-
-//     // Cancel any active subscriptions
-//     if (user.customerId) {
-//       const subscriptions = await stripe.subscriptions.list({
-//         customer: user.customerId,
-//         status: "active",
-//       });
-
-//       for (const subscription of subscriptions.data) {
-//         await stripe.subscriptions.update(subscription.id, {
-//           cancel_at_period_end: true,
-//         });
-//         console.log(`⛔ Subscription ${subscription.id} canceled for ${email}`);
-//       }
-
-//       await stripe.customers.update(user.customerId, { name });
-//     }
-
-//     let customerId = user.customerId;
-
-//     // Create Stripe customer if not exists
-//     if (!customerId) {
-//       const customer = await stripe.customers.create({
-//         name,
-//         email,
-//         payment_method: paymentMethodId,
-//         invoice_settings: {
-//           default_payment_method: paymentMethodId,
-//         },
-//         metadata: {
-//           email,
-//           name,
-//           userId,
-//           amount: amount.toString(),
-//           paymentMethodId,
-//         },
-//       });
-
-//       customerId = customer.id;
-//     }
-
-//     // Create product
-//     const product = await stripe.products.create({
-//       name: `Subscription for ${email}`,
-//     });
-
-//     // Create price
-//     const price = await stripe.prices.create({
-//       unit_amount: amount * 100,
-//       currency: "usd",
-//       recurring: { interval: "day" },
-//       product: product.id,
-//     });
-
-//     // Create subscription with metadata
-//     const subscription = await stripe.subscriptions.create({
-//       customer: customerId,
-//       items: [{ price: price.id }],
-//       trial_period_days: 1,
-//       metadata: {
-//         email,
-//         name,
-//         userId,
-//         amount: amount.toString(),
-//         paymentMethodId,
-//       },
-//       expand: ["latest_invoice.payment_intent"],
-//     });
-
-//     const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
-//     const paymentIntent = latestInvoice?.payment_intent as Stripe.PaymentIntent;
-
-//     // ✅ Add metadata to payment intent
-//     if (paymentIntent?.id) {
-//       await stripe.paymentIntents.update(paymentIntent.id, {
-//         metadata: {
-//           email,
-//           name,
-//           userId,
-//           amount: amount.toString(),
-//           paymentMethodId,
-//         },
-//       });
-//     }
-
-//     // ✅ Update user in MongoDB
-//     await User.findOneAndUpdate(
-//       { email },
-//       {
-//         $set: {
-//           customerId,
-//           subscriptionId: subscription.id,
-//           isPro: true,
-//           subscribedAmount: amount,
-//         },
-//       },
-//       { new: true, runValidators: true }
-//     );
-//     return res.status(200).send({
-//       subscriptionId: subscription.id,
-//       clientSecret: paymentIntent?.client_secret || null,
-//       customerId,
-//     });
-//   } catch (error: any) {
-//     console.error("🚨 Error creating subscription:", error);
-//     return res.status(500).send({ error: "Failed to create subscription." });
-//   }
-// };
-
-
 const stripeSubscription = async (
   req: {
     body: {
@@ -206,7 +72,6 @@ const stripeSubscription = async (
       return res.status(404).send({ error: "User not found." });
     }
 
-    // Cancel any existing subscriptions
     if (user.customerId) {
       const subscriptions = await stripe.subscriptions.list({
         customer: user.customerId,
@@ -225,7 +90,6 @@ const stripeSubscription = async (
 
     let customerId = user.customerId;
 
-    // Create Stripe customer if not exists
     if (!customerId) {
       const customer = await stripe.customers.create({
         name,
@@ -246,12 +110,10 @@ const stripeSubscription = async (
       customerId = customer.id;
     }
 
-    // Create product
     const product = await stripe.products.create({
       name: `Subscription for ${email}`,
     });
 
-    // Create price
     const price = await stripe.prices.create({
       unit_amount: amount * 100,
       currency: "usd",
@@ -259,9 +121,8 @@ const stripeSubscription = async (
       product: product.id,
     });
 
-    // trial logic
     const isEligibleForTrial = !user.hasUsedTrial;
-    const trialDays = isEligibleForTrial ? 1 : 0;    // in production mood need to change trial day
+    const trialDays = isEligibleForTrial ? 1 : 0; 
 
     // Create subscription
     const subscription = await stripe.subscriptions.create({
@@ -282,7 +143,6 @@ const stripeSubscription = async (
     const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
     const paymentIntent = latestInvoice?.payment_intent as Stripe.PaymentIntent;
 
-    // Add metadata to payment intent
     if (paymentIntent?.id) {
       await stripe.paymentIntents.update(paymentIntent.id, {
         metadata: {
@@ -295,7 +155,6 @@ const stripeSubscription = async (
       });
     }
 
-    // Update user in MongoDB
     if (customerId) {
       await User.findOneAndUpdate(
         { email },
@@ -326,95 +185,6 @@ const stripeSubscription = async (
 };
 
 
-
-// const cancelSubscription = async (req: Request, res: Response) => {
-//   const { customerId } = req.params;
-
-//   console.log(customerId);
-
-
-//   try {
-//     const user = await User.findOne({ customerId });
-//     if (!user || !user.customerId) {
-//       return res.status(404).json({ error: "User or subscription not found." });
-//     }
-
-//     const subscriptions = await stripe.subscriptions.list({
-//       customer: user.customerId,
-//       status: "active",
-//     });
-
-//     if (subscriptions.data.length === 0) {
-//       return res.status(404).json({ error: "No active subscription found." });
-//     }
-
-//     const subscriptionId = subscriptions.data[0].id;
-
-//     const canceledSubscription = await stripe.subscriptions.update(subscriptionId, {
-//       cancel_at_period_end: true,
-//     });
-
-//     await User.findByIdAndUpdate({ _id: user._id }, { $set: { cancelRequest: true } }, { new: true, runValidators: true })
-
-//     const textContent = `
-//       Hello,
-
-//       Your subscription has been successfully set to cancel at the end of the current billing period. If you have any questions or wish to resubscribe, please feel free to contact us.
-
-//       Thank you for being with us,
-//       – The Team
-//     `;
-
-//     const htmlContent = `
-//       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; padding: 20px; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
-//         <div style="background-color: #f44336; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-//           <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Subscription Set to Cancel</h1>
-//         </div>
-//         <div style="padding: 20px;">
-//           <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-//             Hello,
-//           </p>
-//           <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-//             Your subscription has been successfully set to <strong>cancel</strong> at the end of the current billing period.
-//           </p>
-//           <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-//             If you have any questions or wish to resubscribe in the future, please feel free to contact us at any time.
-//           </p>
-//           <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-//             Thank you for being with us,
-//           </p>
-//           <p style="color: #333333; font-size: 16px; line-height: 1.6; margin-bottom: 20px; font-weight: bold;">
-//             – The Team
-//           </p>
-//         </div>
-//         <div style="background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #888888;">
-//           <p style="margin: 0;">
-//             If you have any questions, feel free to <a href="mailto:rentpadhomesteam@gmail.com" style="color: #0d6efd; text-decoration: none;">contact us</a>.
-//           </p>
-//           <p style="margin: 10px 0 0;">&copy; ${new Date().getFullYear()} The Team. All rights reserved.</p>
-//         </div>
-//       </div>
-//     `;
-
-//     await sendEmail(
-//       user.email,
-//       "Subscription Set to Cancel",
-//       textContent,
-//       htmlContent
-//     );
-
-//     console.log(`Subscription set to cancel at period end for user: ${user.email}`);
-//     res.status(200).json({
-//       message: "Subscription successfully set to cancel at the end of the current billing period.",
-//       subscriptionId: canceledSubscription.id,
-//     });
-//   } catch (error: any) {
-//     console.error("Error canceling subscription:", error);
-//     res.status(500).json({ error: "Failed to cancel subscription." });
-//   }
-// };
-
-
 const cancelSubscription = async (req: Request, res: Response) => {
   const { customerId } = req.params;
 
@@ -426,12 +196,10 @@ const cancelSubscription = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User or subscription not found." });
     }
 
-    // Fetch all subscriptions for the customer
     const subscriptions = await stripe.subscriptions.list({
       customer: user.customerId,
     });
 
-    // Find the one with status trialing or active
     const subscription = subscriptions.data.find(
       (sub) => sub.status === "active" || sub.status === "trialing"
     );
@@ -440,12 +208,10 @@ const cancelSubscription = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "No active or trialing subscription found." });
     }
 
-    // Cancel at period end
     const canceledSubscription = await stripe.subscriptions.update(subscription.id, {
       cancel_at_period_end: true,
     });
 
-    // Update user state in DB
     await User.findByIdAndUpdate(
       { _id: user._id },
       { $set: { cancelRequest: true, nextBillingTime: "N/A" } },
@@ -609,14 +375,6 @@ const handleSubscriptionUpdated = async (event: Stripe.Event) => {
   console.log("Email:", email);
   console.log("User ID:", userId);
   console.log("Amount:", amount);
-
-  // Example update logic
-  // if (email && userId) {
-  //   await User.findByIdAndUpdate(userId, {
-  //     isPro: subscription.status === "active",
-  //     subscribedAmount: parseFloat(amount),
-  //   });
-  // }
 };
 
 
@@ -644,11 +402,6 @@ const handleSubscriptionCanceled = async (event: Stripe.Event) => {
   await subscriptionScheduleCanceledEmail(email, name)
 };
 
-// const handleInvoiceFinalized = async (event: Stripe.Event) => {
-//   const invoice = event?.data?.object as Stripe.Invoice;
-//   const { email, amount } = invoice.metadata || {};
-//   console.log(`📄 Invoice finalized for ${email}, amount: ${amount}`);
-// };
 
 const handleInvoiceFinalized = async (event: Stripe.Event) => {
   const invoice = event?.data?.object as Stripe.Invoice;
@@ -673,38 +426,13 @@ const handleSubscriptionDeleted = async (event: Stripe.Event) => {
 
 
   console.log("delete subsctiption", email);
-
-  // await User.findByIdAndUpdate(userId, {
-  //   isPro: false,
-  //   subscriptionId: null,
-  //   // subscriptionStatus: "deleted",
-  // });
-
-
 };
 
 
 const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
-  // const invoice = event.data.object as Stripe.Invoice;
-  // const subscription = event.data.object as Stripe.Subscription;
-  // const customerId = subscription.customer as string;
-  // const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-  // const metadata = customer.metadata || {};
-  // const invoiceURL = invoice.invoice_pdf || 'N/A';
-
-  // const email = metadata.email || 'N/A';
-  // const name = metadata.name || 'N/A';
-  // const userId = metadata.userId || 'N/A';
-  // const amount = metadata.amount || '0';
-  // const trialUsed = metadata.trialUsed;
-
-  // console.log({ metadata });
-  // console.log({ trialUsed });
-
-  const invoice = event.data.object as Stripe.Invoice;
+    const invoice = event.data.object as Stripe.Invoice;
   const subscriptionId = invoice.subscription as string;
 
-  // ✅ Fetch subscription directly to get trialUsed and other metadata
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const metadata = subscription.metadata || {};
 
@@ -740,11 +468,8 @@ const handleInvoicePaymentSucceeded = async (event: Stripe.Event) => {
   }
 
 
-
-
   if (userId !== 'N/A') {
     const res = await User.findByIdAndUpdate({ _id: userId }, {
-      // isPro: subscription.status === "active",
       isPro: true,
       subscribedAmount: parseFloat(amount),
       nextBillingTime

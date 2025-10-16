@@ -16,7 +16,7 @@ const s3 = new AWS.S3({
     accessKeyId: process.env.ACCESS_KEY!,
     secretAccessKey: process.env.ACCESS_SECRET_key!,
     httpOptions: {
-        timeout: 60 * 60 * 1000, // 1 hour timeout for large file uploads
+        timeout: 60 * 60 * 1000, 
     },
     maxRetries: 3,
 });
@@ -220,7 +220,6 @@ const selectFavoritePack = catchAsync(async (req, res) => {
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
-        // message: 'Melody has been successfully added to your favourites.',
         message: result.message,
         data: true,
     });

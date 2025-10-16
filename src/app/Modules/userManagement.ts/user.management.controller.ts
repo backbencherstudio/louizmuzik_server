@@ -72,29 +72,6 @@ const updateUserData = catchAsync(async (req, res) => {
     }
   } 
 
-  // if (file) {
-  //   const cleanFilename = file.originalname
-  //     .replace(/\s+/g, "_")
-  //     .replace(/[^a-zA-Z0-9._-]/g, "")
-  //     .toLowerCase();
-
-  //   const s3Key = `${Date.now()}-${cleanFilename}`;
-
-  //   try {
-  //     const uploadResult = await s3.upload({
-  //       Bucket: bucketName,
-  //       Key: s3Key,
-  //       Body: file.buffer,
-  //       ContentType: file.mimetype,
-  //     }).promise();
-
-  //     newProfileImageUrl = uploadResult.Location;
-  //   } catch (err) {
-  //     console.error("S3 upload error:", err);
-  //     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "S3 upload error");
-  //   }
-  // }
-
   else {
     newProfileImageUrl = user.profile_image;
   }
