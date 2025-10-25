@@ -16,7 +16,7 @@ import { subscriptionScheduleCanceledEmail } from "../../utils/subscriptionSched
 import { freeTrialEmailNotification } from "../../utils/freeTrialEmailNotification";
 
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const stripe = new Stripe(process.env.STRIPE_LIVE_SECRET_KEY as string);
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
