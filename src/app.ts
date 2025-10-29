@@ -14,6 +14,8 @@ app.use(cors({
     const allowedOrigins = [
       'https://louizmuzik-client.vercel.app',
       'http://localhost:3000',
+      'https://melodycollab.com/',
+      'https://melodycollab.com',
     ];
 
     if ((typeof origin === 'string' && allowedOrigins.includes(origin)) || !origin) {
