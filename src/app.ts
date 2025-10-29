@@ -18,7 +18,9 @@ app.use(cors({
       'https://melodycollab.com',
       'http://melodycollab.com',
       'https://www.melodycollab.com/',
-      
+      'https://www.melodycollab.com',
+      'http://www.melodycollab.com',
+      'https://www.melodycollab.com'
     ];
 
     if ((typeof origin === 'string' && allowedOrigins.includes(origin)) || !origin) {
