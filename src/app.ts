@@ -16,6 +16,7 @@ app.use(cors({
       'http://localhost:3000',
       'https://melodycollab.com/',
       'https://melodycollab.com',
+      'https://www.melodycollab.com/',
     ];
 
     if ((typeof origin === 'string' && allowedOrigins.includes(origin)) || !origin) {
