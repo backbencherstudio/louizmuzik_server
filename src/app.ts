@@ -9,31 +9,28 @@ import bodyParser from "body-parser";
 dotenv.config();
 const app: Application = express();
 
+const allowedOrigins = [
+  'https://louizmuzik-client.vercel.app',
+  'http://localhost:3000',
+  'https://melodycollab.com',
+  'http://melodycollab.com',
+  'https://www.melodycollab.com',
+  'http://www.melodycollab.com'
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://louizmuzik-client.vercel.app',
-      'http://localhost:3000',
-      'https://melodycollab.com/',
-      'https://melodycollab.com',
-      'http://melodycollab.com',
-      'https://www.melodycollab.com/',
-      'https://www.melodycollab.com',
-      'http://www.melodycollab.com',
-      'https://www.melodycollab.com'
-    ];
-
-    if ((typeof origin === 'string' && allowedOrigins.includes(origin)) || !origin) {
-      callback(null, true);
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(new Error('CORS not allowed by this origin'));
+      return callback(new Error('CORS not allowed by this origin'));
     }
   },
-  credentials: true, 
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
-  allowedHeaders: ['Content-Type', 'Authorization'], 
+  credentials: true,          
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
 
 
 app.use(cookieParser());
