@@ -10,6 +10,7 @@ dotenv.config();
 const app: Application = express();
 
 const allowedOrigins = [
+  '*',
   'https://louizmuzik-client.vercel.app',
   'http://localhost:3000',
   'https://melodycollab.com',
