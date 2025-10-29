@@ -15,23 +15,19 @@ const allowedOrigins = [
   'https://melodycollab.com',
   'http://melodycollab.com',
   'https://www.melodycollab.com',
-  'http://www.melodycollab.com',
-  'melodycollab.com',
-  'www.melodycollab.com',
-  'https://www.melodycollab.com'
-
+  'http://www.melodycollab.com'
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      callback(null, true);
     } else {
-      return callback(new Error('CORS not allowed by this origin'));
+      callback(new Error('CORS not allowed for this origin: ' + origin));
     }
   },
-  credentials: false,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
