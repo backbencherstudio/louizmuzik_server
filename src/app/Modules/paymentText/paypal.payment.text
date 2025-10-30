@@ -69,8 +69,8 @@ const paypalSubscription = async (amount: number, userEmail: string) => {
         application_context: {
           brand_name: "melody",
           user_action: "SUBSCRIBE_NOW",
-          return_url: "http://localhost:3000/success",
-          cancel_url: "http://localhost:3000/cancel",
+          return_url: "https://www.melodycollab.com/success",
+          cancel_url: "https://www.melodycollab.com/cancel",
         },
       },
       {
