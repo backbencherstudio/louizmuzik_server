@@ -36,8 +36,9 @@ app.use(cors({
 
 app.use(cookieParser());
 app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }));
-app.use("/api/v1/payment/stripeWebhook", bodyParser.raw({ type: "application/json", limit: "4096mb" }));
+app.use("/api/v1/payment/stripeWebhook", bodyParser.raw({ type: "application/json"}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true , limit: '4096mb'}));
 
 app.use('/uploads', express.static('uploads'));
 app.use('/api/v1', router);
