@@ -8,6 +8,22 @@ import { melodyService } from "./melody.service";
 import AWS from "aws-sdk";
 import busboy from "busboy";
 import { Melody } from "./melody.module";
+import ejs from "ejs";
+import puppeteer from "puppeteer";
+import fs from 'fs';
+import path from 'path';
+import { User } from "../User/user.model";
+
+
+
+console.log("cwd inside melody.controller.ts:", process.cwd());
+
+import { join } from 'path';
+
+
+const pathToTemplates = join(process.cwd(), 'src', 'app', 'modules', 'templates');
+
+console.log("Path to templates:", pathToTemplates);
 
 const bucketName = process.env.BUCKET_NAME!;
 
@@ -45,8 +61,8 @@ const melodyCreateByProducer = catchAsync(async (req, res) => {
         }
 
         let cleanFilename = realFilename
-            .replace(/\s+/g, "_") 
-            .replace(/[^a-zA-Z0-9._-]/g, "")  
+            .replace(/\s+/g, "_")
+            .replace(/[^a-zA-Z0-9._-]/g, "")
             .toLowerCase();
 
         const key = `${Date.now()}-${cleanFilename}`;
@@ -120,7 +136,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
     const getS3KeyFromUrl = (url: string | null): string | null => {
         if (!url) return null;
         const urlObj = new URL(url);
-        const key = urlObj.pathname.substring(1); 
+        const key = urlObj.pathname.substring(1);
         return key || null;
     };
     const oldAudioKey = getS3KeyFromUrl(oldAudioUrl);
@@ -131,9 +147,9 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
             realFilename = (filename as any).filename;
         }
         let cleanFilename = realFilename
-            .replace(/\s+/g, "_")  
-            .replace(/[^a-zA-Z0-9._-]/g, "")  
-            .toLowerCase(); 
+            .replace(/\s+/g, "_")
+            .replace(/[^a-zA-Z0-9._-]/g, "")
+            .toLowerCase();
         const key = `${Date.now()}-${cleanFilename}`;
         const uploadParams = {
             Bucket: bucketName,
@@ -144,7 +160,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
 
         const uploadPromise = s3.upload(uploadParams).promise();
         uploadPromise.then(data => {
-                if (fieldname === 'audioUrl') {
+            if (fieldname === 'audioUrl') {
                 audioUrl = data.Location;
             }
         });
@@ -169,7 +185,7 @@ const melodyUpdateByProducer = catchAsync(async (req, res) => {
             }
             const payload = {
                 ...fields,
-                audioUrl: audioUrl || melody.audioUrl, 
+                audioUrl: audioUrl || melody.audioUrl,
             };
 
             const result = await melodyService.melodyUpdateByProducer(melodyId, payload);
@@ -267,6 +283,70 @@ const getSingleMelodyData = catchAsync(async (req, res) => {
 });
 
 
+const melodyLicensePdfGenerate = catchAsync(async (req, res) => {
+    const melodyId = req.params.melodyId;
+    const melody = await melodyService.getSingleMelodyData(melodyId);
+    const userId = melody?.userId;
+    await User.findById({ _id: userId });
+
+    const user = userId ? await melodyService.getAllMelodesEachProducer(userId.toString()) : undefined;
+
+    if (!melody || !user) {
+        return res.status(404).send({ message: 'Melody or User not found' });
+    }
+
+    const producerName = melody.producer;
+    const percentage = melody.splitPercentage;
+
+    const data = {
+        melody,
+        user,
+        producerName,
+        percentage,
+        downloadDate: new Date().toISOString().split('T')[0],
+        platform: 'Melody Collab',
+    };
+
+
+
+
+    const templatePath = join(process.cwd(), 'src', 'app', 'modules', 'melody', 'templates', 'license.ejs');
+
+    try {
+        const html = await ejs.renderFile(templatePath, data);
+
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+
+        await browser.close();
+
+        const tempFilePath = path.join(process.cwd(), 'temp', `melody_license_${melodyId}.pdf`);
+
+        if (!fs.existsSync(path.dirname(tempFilePath))) {
+            fs.mkdirSync(path.dirname(tempFilePath), { recursive: true });
+        }
+
+        fs.writeFileSync(tempFilePath, pdfBuffer);
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=melody_license_${melodyId}.pdf`);
+
+        res.sendFile(tempFilePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).send({ message: 'Error sending PDF file' });
+            } else {
+                fs.unlinkSync(tempFilePath);
+            }
+        });
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        res.status(500).send({ message: 'Error generating PDF' });
+    }
+});
+
 
 export const melodyController = {
     getAllMelodyes,
@@ -278,5 +358,6 @@ export const melodyController = {
     eachMelodyDownloadCounter,
     melodyDownloadCounterForEachProducer,
     melodyPlay,
-    getSingleMelodyData
+    getSingleMelodyData,
+    melodyLicensePdfGenerate,
 }

@@ -10,5 +10,4 @@ export interface ITransactions {
   subscriptionAmount?: number;
   salesAmount?: number;
   invoiceURL?: string;
-
 }

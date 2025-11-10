@@ -19,6 +19,8 @@ const allowedOrigins = [
   'http://www.melodycollab.com'
 ];
 
+
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -32,6 +34,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
 
 
 app.use(cookieParser());

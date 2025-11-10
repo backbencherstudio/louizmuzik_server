@@ -34,9 +34,17 @@ router.patch(
   '/melodyPlay/:melodyId',
   melodyController.melodyPlay
 );
+
+router.get(
+  '/license/:melodyId',
+  melodyController.melodyLicensePdfGenerate
+);
+
+
 router.get(
   '/single-melody/:melodyId',
   melodyController.getSingleMelodyData
 );
+
 
 export const MelodyRouter = router;

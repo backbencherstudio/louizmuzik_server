@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melody License Agreement</title>
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 24px 48px;
+            background: white;
+            color: #111;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #0CCF9F;
+            margin: 0;
+        }
+
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+
+        .info-bar {
+            background: rgba(12, 207, 159, 0.05);
+            padding: 16px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0CCF9F;
+            margin: 0 0 16px 0;
+        }
+
+        .content {
+            margin-left: 24px;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .separator {
+            border-top: 1px solid #e5e7eb;
+            margin: 24px 0;
+        }
+
+        .text {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .acceptance-box {
+            background: rgba(12, 207, 159, 0.05);
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 48px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="title">Melody License Agreement</h1>
+            <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Melody%20Collab%20Final-04-VJLnQZEmalGAsuMWj5l5xiDtzcRGij.png"
+                alt="MelodyCollab Logo" class="logo">
+        </div>
+
+        <div class="info-bar">
+            <div class="info-item">
+                <span>Download Date: <%= downloadDate %></span>
+            </div>
+            <div class="info-item">
+                <span>Platform: <%= platform %></span>
+            </div>
+        </div>
+
+        <!-- Melody Owner -->
+        <div class="card">
+            <h2 class="section-title">01. Melody Owner</h2>
+            <div class="content">
+                <div class="label">Producer Name: <%= producerName %>
+                </div>
+                <div class="value">
+                    <%= user.name %>
+                </div>
+                <div class="label">Name: <%= producerName %>
+                </div>
+                <div class="value">
+                    <%= user.name %>
+                </div>
+                <div class="label">Sales Platform Alias: <b>Melody Collab</b></div>
+                <div class="value">
+                    <%= user.alias %>
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <h2 class="section-title">02. Melody Information</h2>
+            <div class="content">
+                <div class="label">Melody Name:</div>
+                <div class="value">
+                    <%= melody.name %>
+                </div>
+                <div class="label">Collaboration Percentage: <b>
+                        <%= percentage %>%
+                    </b></div>
+                <div class="value">
+                    <%= melody.collaborationPercentage %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collaboration Terms -->
+        <div class="card">
+            <h2 class="section-title">03. Collaboration Terms</h2>
+            <div class="text">
+                This license permits any producer to download and use this melody solely for creating collaborative
+                beats, in compliance with the terms specified in this license.
+            </div>
+            <div class="text">
+                The producer who downloads this melody agrees to respect the specified earnings percentage and to add
+                the melody owner as a collaborator on beat-selling platforms, using the provided alias.
+            </div>
+            <div class="text">
+                Including the melody owner as a collaborator and respecting the earnings percentage is a contractual
+                obligation in any distribution or sale of the beat containing this melody on digital stores or
+                beat-selling platforms.
+            </div>
+            <div class="text">
+                If the beat becomes part of a musical work and is registered with a Performing Rights Organization
+                (PRO), the downloading producer must contact the melody owner to include them as a composer of the work,
+                as applicable.
+            </div>
+        </div>
+
+       <!-- Intellectual Property -->
+        <div class="card">
+            <h2 class="section-title">04. Intellectual Property</h2>
+            <div class="text">
+                The melody owner retains all copyright and intellectual property rights over the melody. This license does not grant any additional rights to the melody that are not expressly permitted within the terms of this collaboration.
+            </div>
+            <div class="text">
+                This license is non-transferable and does not grant any sublicensing rights. Producers are not permitted to share, resell, or redistribute the melody except as part of a beat created under the terms of this license.
+            </div>
+        </div>
+ 
+        <!-- Limitation of Liability -->
+        <div class="card">
+            <h2 class="section-title">05. Limitation of Liability</h2>
+            <div class="text">
+                Melody Collab and the melody owner are not responsible for any claims, damages, or losses that may arise from the use of this melody outside the terms specified in this license.
+            </div>
+            <div class="text">
+                The producer who downloads and uses this melody is solely responsible for complying with the terms of this license and for any consequences arising from non-compliance.
+            </div>
+        </div>
+ 
+        <!-- Jurisdiction -->
+        <div class="card">
+            <h2 class="section-title">06. Jurisdiction and Dispute Resolution</h2>
+            <div class="text">
+                This license will be governed and interpreted according to the laws of Mexico. Any dispute related to this license will be resolved through mediation or arbitration in Mexico, and if unresolved, will be submitted to the competent courts within the same jurisdiction.
+            </div>
+        </div>
+ 
+        <!-- Acceptance of Terms -->
+        <div class="card">
+            <h2 class="section-title">07. Acceptance of Terms</h2>
+            <div class="text">
+                By downloading this melody, the producer confirms that they understand and accept all terms specified herein and agree to comply fully.
+            </div>
+            <div class="text">
+                Non-compliance with these terms constitutes a legal violation of the melody owner's rights and may result in legal action.
+            </div>
+        </div>
+ 
+        <!-- Usage Limitations -->
+        <div class="card">
+            <h2 class="section-title">08. Usage Limitations</h2>
+            <div class="text">
+                This license is valid exclusively for the creation and distribution of a beat containing the specified melody. It does not grant other rights to the melody or permit its use outside the collaborative context.
+            </div>
+        </div>
+ 
+        <!-- Final Acceptance -->
+        <div class="card">
+            <div class="acceptance-box">
+                <h3 style="font-weight: 600; margin: 0 0 8px 0;">Acceptance of Terms:</h3>
+                <p style="margin: 0; font-size: 14px;">
+                    By downloading and using the melody, the Collaborating Producer agrees to all terms set forth in this license.
+                </p>
+            </div>
+        </div>
+ 
+
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated by MelodyCollab© 2025</p>
+        </div>
+    </div>
+</body>
+
+</html>
