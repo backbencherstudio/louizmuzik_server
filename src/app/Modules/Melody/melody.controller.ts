@@ -21,9 +21,11 @@ console.log("cwd inside melody.controller.ts:", process.cwd());
 import { join } from 'path';
 
 
-const pathToTemplates = join(process.cwd(), 'src', 'app', 'modules', 'templates');
 
-console.log("Path to templates:", pathToTemplates);
+//const pathToTemplates = join(process.cwd(), 'src', 'app', 'modules', 'templates');
+const templatePath = join(process.cwd(), 'src', 'app', 'Modules', 'Melody', 'templates', 'license.ejs');
+
+console.log("Path to templates:", templatePath);
 
 const bucketName = process.env.BUCKET_NAME!;
 
