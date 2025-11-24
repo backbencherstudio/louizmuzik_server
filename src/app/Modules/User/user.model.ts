@@ -124,7 +124,13 @@ export const DiscographySchema = new Schema({
   versionKey: false
 });
 
+export const contact_us = new Schema({
+  name : {type:String, required:true},
+  email: {type:String,required:true},
+  msg : {type:String,required:true}
+})
 
+export const ContactUs = model('contactus', contact_us)
 
 export const TampUserCollection = model<TUser>('TampUser', TampUserSchema);
 

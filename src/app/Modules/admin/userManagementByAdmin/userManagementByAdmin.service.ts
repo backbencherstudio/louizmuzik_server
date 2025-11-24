@@ -59,10 +59,10 @@ const billingHistoryForAdmin = async () => {
     const result = await Transactions.find()
         .populate({
             path: "packId",
-            select: "title userId", 
+            select: "title userId",
             populate: {
-                path: "userId", 
-                select: "email", 
+                path: "userId",
+                select: "email",
             },
             strictPopulate: false,
         })
@@ -188,5 +188,6 @@ export const adminService = {
     deleteUser,
     billingHistoryForAdmin,
     adminOverview,
-    singleUserInformationForAdmin
+    singleUserInformationForAdmin,
+
 }

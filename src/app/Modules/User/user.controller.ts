@@ -3,6 +3,7 @@ import httpStatus from 'http-status';
 import { catchAsync } from '../../utils/catchAsync';
 import { UserServices } from './user.service';
 import config from '../../config';
+import { ContactUs } from './user.model';
 
 
 
@@ -158,6 +159,32 @@ const removeDiscography = catchAsync(async (req, res) => {
   });
 });
 
+const createContactUs = catchAsync(async (req, res) => {
+  try {
+    const { name, email, msg } = req.body;
+
+    if (!name || !email || !msg) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format." });
+    }
+
+    const newContact = await ContactUs.create({
+      name,
+      email,
+      msg
+    });
+
+    return res.status(201).json(newContact);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error." });
+  }
+});
+
+
 
 
 export const userController = {
@@ -172,5 +199,6 @@ export const userController = {
   googleLogin,
   createDiscography,
   fetchDiscography,
-  removeDiscography 
+  removeDiscography,
+  createContactUs
 };

@@ -3,7 +3,7 @@ import httpStatus from "http-status";
 import { AppError } from "../../errors/AppErrors";
 import bcrypt from 'bcrypt';
 import config from "../../config";
-import { Discography, TampUserCollection, User } from "./user.model";
+import {Discography, TampUserCollection, User } from "./user.model";
 import { TLoginUser, TUser } from "./user.interface";
 import { sendEmail } from "../../utils/sendEmail";
 import { createToken, verifyToken } from "./user.utils";
@@ -221,7 +221,7 @@ type GoogleLoginResponse = {
 
 const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
   const isUserExists = await User.findOne({ email: payload.email });
-
+  
   if (isUserExists) {
     const jwtPayload = {
       email: isUserExists.email,
@@ -249,7 +249,6 @@ const googleLogin = async (payload: any): Promise<GoogleLoginResponse> => {
     password: "",
     country: "Need to update",
   };
-
   const result = await User.create(newUserData);
   if (!result) {
     throw new AppError(httpStatus.NOT_ACCEPTABLE, "User Not Create")
@@ -295,6 +294,8 @@ const deleteDiscography = async (id: string) => {
 
 
 
+
+
 export const UserServices = {
   createAdmin,
   createUserIntoDB,
@@ -307,5 +308,6 @@ export const UserServices = {
   googleLogin,
   discographySet,
   getDiscography,
-  deleteDiscography
+  deleteDiscography,
+
 };

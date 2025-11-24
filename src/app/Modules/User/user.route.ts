@@ -10,6 +10,11 @@ router.post(
 );
 
 router.post(
+  '/contactUs',
+  userController.createContactUs
+)
+
+router.post(
   '/create-user',
   userController.createUser,
 );
@@ -48,6 +53,8 @@ router.post(
   '/googleLogin',
   userController.googleLogin,
 );
+
+
 
 router.post('/createDiscography', userController.createDiscography);
 router.get('/fetchDiscography/:userId', userController.fetchDiscography);

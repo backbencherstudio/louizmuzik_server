@@ -9,6 +9,11 @@ router.get(
   adminUserController.getAllUsrDataByAdminFromDB,
 );
 
+router.get(
+  '/getContactUs',
+  adminUserController.getAllUserContacts
+)
+
 router.patch(
   '/:selectedUser_Id',
   adminUserController.changeUsersSubscriptionStatus,
