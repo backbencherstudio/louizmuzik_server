@@ -311,7 +311,7 @@ const melodyLicensePdfGenerate = catchAsync(async (req, res) => {
 
 
 
-    const templatePath = join(process.cwd(), 'src', 'app', 'modules', 'melody', 'templates', 'license.ejs');
+    const templatePath = join(process.cwd(), 'src', 'app', 'Modules', 'Melody', 'templates', 'license.ejs');
 
     try {
         const html = await ejs.renderFile(templatePath, data);
